@@ -1,0 +1,221 @@
+package sweph
+
+/*
+#cgo CFLAGS: -I${SRCDIR}/../../third_party/swisseph
+
+#include "swephexp.h"
+#include "swehouse.h"
+#include <stdlib.h>
+#include <string.h>
+
+// Wrapper to call swe_calc_ut with proper array handling
+static int calc_ut(double jd_ut, int ipl, int iflag, double *xx, char *serr) {
+    return swe_calc_ut(jd_ut, ipl, iflag, xx, serr);
+}
+
+// Wrapper for house calculation
+static int houses(double jd_ut, double lat, double lon, int hsys, double *cusps, double *ascmc) {
+    return swe_houses(jd_ut, lat, lon, hsys, cusps, ascmc);
+}
+
+// Wrapper for house position
+static double house_pos(double armc, double geolat, double eps, int hsys, double *xpin, char *serr) {
+    return swe_house_pos(armc, geolat, eps, hsys, xpin, serr);
+}
+*/
+import "C"
+import (
+	"fmt"
+	"math"
+	"sync"
+	"unsafe"
+)
+
+// Planet IDs matching Swiss Ephemeris constants
+const (
+	SE_SUN          = C.SE_SUN
+	SE_MOON         = C.SE_MOON
+	SE_MERCURY      = C.SE_MERCURY
+	SE_VENUS        = C.SE_VENUS
+	SE_MARS         = C.SE_MARS
+	SE_JUPITER      = C.SE_JUPITER
+	SE_SATURN       = C.SE_SATURN
+	SE_URANUS       = C.SE_URANUS
+	SE_NEPTUNE      = C.SE_NEPTUNE
+	SE_PLUTO        = C.SE_PLUTO
+	SE_CHIRON       = C.SE_CHIRON
+	SE_TRUE_NODE    = C.SE_TRUE_NODE
+	SE_MEAN_NODE    = C.SE_MEAN_NODE
+	SE_MEAN_APOG    = C.SE_MEAN_APOG  // Mean Lilith
+	SE_OSCU_APOG    = C.SE_OSCU_APOG  // True Lilith
+)
+
+// Calculation flags
+const (
+	SEFLG_SWIEPH   = C.SEFLG_SWIEPH
+	SEFLG_SPEED    = C.SEFLG_SPEED
+)
+
+// House system chars
+const (
+	HousePlacidus       = 'P'
+	HouseKoch           = 'K'
+	HouseEqual          = 'E'
+	HouseWholeSign      = 'W'
+	HouseCampanus       = 'C'
+	HouseRegiomontanus  = 'R'
+	HousePorphyry       = 'O'
+)
+
+// CalcResult holds the result of a planet calculation
+type CalcResult struct {
+	Longitude     float64
+	Latitude      float64
+	Distance      float64
+	SpeedLong     float64
+	SpeedLat      float64
+	SpeedDist     float64
+	IsRetrograde  bool
+}
+
+// HouseResult holds house cusp and angle data
+type HouseResult struct {
+	Cusps  [13]float64 // index 1-12 = house cusps
+	ASC    float64
+	MC     float64
+	ARMC   float64
+	Vertex float64
+	EqASC  float64 // East Point (equatorial ascendant)
+}
+
+var mu sync.Mutex
+
+// Init sets the ephemeris path
+func Init(ephePath string) {
+	mu.Lock()
+	defer mu.Unlock()
+	cpath := C.CString(ephePath)
+	defer C.free(unsafe.Pointer(cpath))
+	C.swe_set_ephe_path(cpath)
+}
+
+// Close releases Swiss Ephemeris resources
+func Close() {
+	mu.Lock()
+	defer mu.Unlock()
+	C.swe_close()
+}
+
+// CalcUT calculates planet position at given Julian Day UT
+func CalcUT(jdUT float64, planet int) (*CalcResult, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	var xx [6]C.double
+	var serr [256]C.char
+	iflag := C.int(SEFLG_SWIEPH | SEFLG_SPEED)
+
+	ret := C.calc_ut(C.double(jdUT), C.int(planet), iflag, &xx[0], &serr[0])
+	if ret < 0 {
+		return nil, fmt.Errorf("swe_calc_ut error: %s", C.GoString(&serr[0]))
+	}
+
+	return &CalcResult{
+		Longitude:    float64(xx[0]),
+		Latitude:     float64(xx[1]),
+		Distance:     float64(xx[2]),
+		SpeedLong:    float64(xx[3]),
+		SpeedLat:     float64(xx[4]),
+		SpeedDist:    float64(xx[5]),
+		IsRetrograde: float64(xx[3]) < 0,
+	}, nil
+}
+
+// Houses calculates house cusps and angles
+func Houses(jdUT float64, lat, lon float64, hsys int) (*HouseResult, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	var cusps [13]C.double
+	var ascmc [10]C.double
+
+	C.houses(C.double(jdUT), C.double(lat), C.double(lon), C.int(hsys), &cusps[0], &ascmc[0])
+
+	result := &HouseResult{
+		ASC:    float64(ascmc[0]),
+		MC:     float64(ascmc[1]),
+		ARMC:   float64(ascmc[2]),
+		Vertex: float64(ascmc[3]),
+		EqASC:  float64(ascmc[4]),
+	}
+	for i := 0; i < 13; i++ {
+		result.Cusps[i] = float64(cusps[i])
+	}
+	return result, nil
+}
+
+// HousePos returns the house position (1.0-12.999) of a given ecliptic point
+func HousePos(armc, geoLat, eps float64, hsys int, lon, lat float64) (float64, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	var xpin [2]C.double
+	xpin[0] = C.double(lon)
+	xpin[1] = C.double(lat)
+	var serr [256]C.char
+
+	pos := C.house_pos(C.double(armc), C.double(geoLat), C.double(eps), C.int(hsys), &xpin[0], &serr[0])
+	if float64(pos) == 0 {
+		return 0, fmt.Errorf("swe_house_pos error: %s", C.GoString(&serr[0]))
+	}
+	return float64(pos), nil
+}
+
+// JulDay converts calendar date to Julian Day
+func JulDay(year, month, day int, hour float64, gregorian bool) float64 {
+	cal := C.int(C.SE_GREG_CAL)
+	if !gregorian {
+		cal = C.int(C.SE_JUL_CAL)
+	}
+	return float64(C.swe_julday(C.int(year), C.int(month), C.int(day), C.double(hour), cal))
+}
+
+// RevJul converts Julian Day back to calendar date
+func RevJul(jd float64, gregorian bool) (year, month, day int, hour float64) {
+	cal := C.int(C.SE_GREG_CAL)
+	if !gregorian {
+		cal = C.int(C.SE_JUL_CAL)
+	}
+	var y, m, d C.int
+	var h C.double
+	C.swe_revjul(C.double(jd), cal, &y, &m, &d, &h)
+	return int(y), int(m), int(d), float64(h)
+}
+
+// DeltaT returns the difference TT - UT in days for a given JD UT
+func DeltaT(jdUT float64) float64 {
+	return float64(C.swe_deltat(C.double(jdUT)))
+}
+
+// Obliquity returns the obliquity of the ecliptic
+func Obliquity(jdUT float64) (float64, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	var xx [6]C.double
+	var serr [256]C.char
+	ret := C.calc_ut(C.double(jdUT), C.int(C.SE_ECL_NUT), C.int(SEFLG_SWIEPH), &xx[0], &serr[0])
+	if ret < 0 {
+		return 0, fmt.Errorf("obliquity error: %s", C.GoString(&serr[0]))
+	}
+	return float64(xx[0]), nil
+}
+
+// NormalizeDegrees normalizes an angle to [0, 360)
+func NormalizeDegrees(deg float64) float64 {
+	deg = math.Mod(deg, 360.0)
+	if deg < 0 {
+		deg += 360.0
+	}
+	return deg
+}

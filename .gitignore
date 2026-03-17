@@ -1,0 +1,5 @@
+# Build output
+bin/
+
+# Third-party dependencies
+third_party/
