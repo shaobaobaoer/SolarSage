@@ -78,25 +78,22 @@ const (
 	AspectSesquiquadrate AspectType = "Sesquiquadrate"
 )
 
+// aspectCSVNames maps aspect types to Solar Fire CSV column names.
+var aspectCSVNames = map[AspectType]string{
+	AspectSextile:        "Quincunx",
+	AspectTrine:          "Sextile",
+	AspectQuincunx:       "Trine",
+	AspectSemiSquare:     "Opposition",
+	AspectSesquiquadrate: "Opposition",
+	AspectOpposition:     "Quincunx",
+}
+
 // AspectCSVName maps aspect types to Solar Fire CSV column names.
-// Solar Fire uses non-standard names in its CSV export format.
 func AspectCSVName(at AspectType) string {
-	switch at {
-	case AspectSextile:
-		return "Quincunx"    // 60 deg -> "Quincunx"
-	case AspectTrine:
-		return "Sextile"     // 120 deg -> "Sextile"
-	case AspectQuincunx:
-		return "Trine"       // 150 deg -> "Trine"
-	case AspectSemiSquare:
-		return "Opposition"  // 45 deg -> "Opposition"
-	case AspectSesquiquadrate:
-		return "Opposition"  // 135 deg -> "Opposition"
-	case AspectOpposition:
-		return "Quincunx"    // 180 deg -> "Quincunx"
-	default:
-		return string(at)
+	if name, ok := aspectCSVNames[at]; ok {
+		return name
 	}
+	return string(at)
 }
 
 // AspectDef defines a standard aspect with its angle
@@ -491,20 +488,20 @@ func BodyDisplayName(id string) string {
 	return id
 }
 
+// chartTypeShortMap maps ChartType to its short code
+var chartTypeShortMap = map[ChartType]string{
+	ChartTransit:      "Tr",
+	ChartNatal:        "Na",
+	ChartProgressions: "Sp",
+	ChartSolarArc:     "Sa",
+}
+
 // ChartTypeShort returns the short code for a ChartType (e.g. "Tr", "Na", "Sp", "Sa")
 func ChartTypeShort(ct ChartType) string {
-	switch ct {
-	case ChartTransit:
-		return "Tr"
-	case ChartNatal:
-		return "Na"
-	case ChartProgressions:
-		return "Sp"
-	case ChartSolarArc:
-		return "Sa"
-	default:
-		return string(ct)
+	if s, ok := chartTypeShortMap[ct]; ok {
+		return s
 	}
+	return string(ct)
 }
 
 // EventTypeCSV returns the CSV event type string
