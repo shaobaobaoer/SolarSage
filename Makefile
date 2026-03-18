@@ -2,6 +2,7 @@
 
 BIN_DIR := bin
 PACKAGES := ./cmd/... ./pkg/... ./internal/...
+LIB_PACKAGES := ./pkg/... ./internal/...
 
 build: $(BIN_DIR)/swisseph-mcp
 
@@ -13,7 +14,7 @@ test:
 	go test $(PACKAGES)
 
 test-cover:
-	go test -coverprofile=coverage.out $(PACKAGES)
+	go test -coverprofile=coverage.out $(LIB_PACKAGES)
 	go tool cover -func=coverage.out | tail -1
 
 vet:
