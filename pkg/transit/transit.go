@@ -1108,13 +1108,14 @@ func findVoidOfCourse(events []models.TransitEvent, startJD, endJD float64) []mo
 		}
 		ingressEvt := moonEvts[i]
 
-		// Find the last LEAVE before this ingress (scanning backward)
+		// Find the last aspect event before this ingress (scanning backward)
+		// Priority: Leave > Exact > Enter (Solar Fire uses the last aspect event)
 		var lastLeave *moonEvent
 		for j := i - 1; j >= 0; j-- {
 			if moonEvts[j].IsIngress {
 				break // Previous sign change — stop looking
 			}
-			if moonEvts[j].IsLeave {
+			if moonEvts[j].IsLeave || moonEvts[j].IsExact || moonEvts[j].IsEnter {
 				evt := moonEvts[j]
 				lastLeave = &evt
 				break
