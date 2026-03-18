@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	swisseph "github.com/anthropic/swisseph-mcp"
 	"github.com/anthropic/swisseph-mcp/pkg/chart"
 	"github.com/anthropic/swisseph-mcp/pkg/export"
 	"github.com/anthropic/swisseph-mcp/pkg/geo"
@@ -148,7 +149,7 @@ func (s *Server) handleInitialize(req *jsonRPCRequest) *jsonRPCResponse {
 			},
 			ServerInfo: serverInfo{
 				Name:    "swisseph-mcp",
-				Version: "1.1.0",
+				Version: swisseph.Version,
 			},
 		},
 	}

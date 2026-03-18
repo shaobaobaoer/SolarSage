@@ -1,6 +1,6 @@
 # swisseph-mcp
 
-High-precision astrology calculation engine exposed as a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server. Built on the Swiss Ephemeris library with sub-arcsecond accuracy.
+High-precision astrology calculation engine exposed as a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server. Built on the [Swiss Ephemeris](https://www.astro.com/swisseph/) library with sub-arcsecond accuracy.
 
 ## Features
 
@@ -15,13 +15,13 @@ High-precision astrology calculation engine exposed as a [Model Context Protocol
 - **CSV Export** - Solar Fire compatible output format
 - **1-second precision** - Bisection algorithm for exact event timing
 
-## Supported Bodies
+### Supported Bodies
 
 Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Chiron, North Node (True/Mean), South Node, Lilith (Mean/True)
 
 **Special Points:** ASC, MC, DSC, IC, Vertex, East Point, Lot of Fortune, Lot of Spirit
 
-## House Systems
+### House Systems
 
 Placidus, Koch, Equal, Whole Sign, Campanus, Regiomontanus, Porphyry
 
@@ -30,27 +30,28 @@ Placidus, Koch, Equal, Whole Sign, Campanus, Regiomontanus, Porphyry
 ### Prerequisites
 
 - Go 1.21+
-- GCC (for CGO/Swiss Ephemeris compilation)
+- GCC (for CGO / Swiss Ephemeris compilation)
 
 ### Build
 
 ```bash
+git clone https://github.com/anthropic/swisseph-mcp.git
+cd swisseph-mcp
 make build
 ```
 
 ### Run as MCP Server
 
 ```bash
-# Uses ephemeris files from third_party/swisseph/ephe/
 ./bin/swisseph-mcp
 
-# Or specify a custom ephemeris path
+# Or with a custom ephemeris path
 SWISSEPH_EPHE_PATH=/path/to/ephe ./bin/swisseph-mcp
 ```
 
 ### Claude Desktop Integration
 
-Add to your Claude Desktop config (`claude_desktop_config.json`):
+Add to your `claude_desktop_config.json`:
 
 ```json
 {
@@ -65,6 +66,47 @@ Add to your Claude Desktop config (`claude_desktop_config.json`):
 }
 ```
 
+## Use as a Go Library
+
+The calculation packages can be imported directly:
+
+```go
+import (
+    "github.com/anthropic/swisseph-mcp/pkg/chart"
+    "github.com/anthropic/swisseph-mcp/pkg/models"
+    "github.com/anthropic/swisseph-mcp/pkg/sweph"
+    "github.com/anthropic/swisseph-mcp/pkg/transit"
+)
+
+func main() {
+    // Initialize Swiss Ephemeris
+    sweph.Init("/path/to/ephe")
+    defer sweph.Close()
+
+    // Calculate a natal chart
+    planets := []models.PlanetID{
+        models.PlanetSun, models.PlanetMoon, models.PlanetMercury,
+        models.PlanetVenus, models.PlanetMars,
+    }
+    info, _ := chart.CalcSingleChart(
+        51.5074, -0.1278, 2451545.0,  // London, J2000.0
+        planets, models.DefaultOrbConfig(), models.HousePlacidus,
+    )
+
+    // Search for transit events over 30 days
+    events, _ := transit.CalcTransitEvents(transit.TransitCalcInput{
+        NatalLat: 51.5074, NatalLon: -0.1278,
+        NatalJD:  2451545.0, NatalPlanets: planets,
+        TransitLat: 51.5074, TransitLon: -0.1278,
+        StartJD: 2460676.5, EndJD: 2460706.5,
+        TransitPlanets: planets,
+        EventConfig:    models.DefaultEventConfig(),
+        OrbConfigTransit: models.DefaultOrbConfig(),
+        HouseSystem:    models.HousePlacidus,
+    })
+}
+```
+
 ## MCP Tools
 
 | Tool | Description |
@@ -73,19 +115,17 @@ Add to your Claude Desktop config (`claude_desktop_config.json`):
 | `datetime_to_jd` | ISO 8601 datetime to Julian Day (UT/TT) |
 | `jd_to_datetime` | Julian Day to ISO 8601 datetime |
 | `calc_planet_position` | Single planet position at a given time |
-| `calc_single_chart` | Full natal/event chart calculation |
+| `calc_single_chart` | Full natal/event chart with positions, houses, and aspects |
 | `calc_double_chart` | Synastry/transit double chart with cross-aspects |
 | `calc_progressions` | Secondary progressed planet positions |
 | `calc_solar_arc` | Solar arc directed planet positions |
-| `calc_transit` | Full transit event search over a time range |
+| `calc_transit` | Full transit event search over a time range (JSON or CSV) |
 
-## Example: Calculate a Natal Chart
+### Example: Natal Chart
 
-Request:
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
+  "jsonrpc": "2.0", "id": 1,
   "method": "tools/call",
   "params": {
     "name": "calc_single_chart",
@@ -99,12 +139,11 @@ Request:
 }
 ```
 
-## Example: Search Transit Events
+### Example: Transit Search
 
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 2,
+  "jsonrpc": "2.0", "id": 2,
   "method": "tools/call",
   "params": {
     "name": "calc_transit",
@@ -116,7 +155,8 @@ Request:
       "transit_longitude": -0.1278,
       "start_jd_ut": 2460676.5,
       "end_jd_ut": 2460706.5,
-      "format": "json"
+      "format": "csv",
+      "timezone": "Europe/London"
     }
   }
 }
@@ -125,17 +165,17 @@ Request:
 ## Architecture
 
 ```
-cmd/server/     MCP server entry point
-pkg/mcp/        MCP protocol (JSON-RPC over stdio)
-pkg/chart/      Chart calculations (positions, houses, aspects)
-pkg/transit/    Transit event detection engine
-pkg/progressions/ Secondary progressions & solar arc
-pkg/models/     Core data types and constants
-pkg/julian/     Julian Day conversions
-pkg/geo/        Geocoding and timezone lookup
-pkg/export/     CSV/JSON export
-pkg/sweph/      Swiss Ephemeris C bindings (CGO)
-internal/aspect/ Aspect calculation engine
+cmd/server/        MCP server entry point (JSON-RPC over stdio)
+pkg/mcp/           MCP protocol handler
+pkg/chart/         Chart calculations (positions, houses, aspects)
+pkg/transit/       Transit event detection engine
+pkg/progressions/  Secondary progressions & solar arc
+pkg/models/        Core data types and constants
+pkg/julian/        Julian Day conversions
+pkg/geo/           Geocoding and timezone lookup
+pkg/export/        CSV/JSON export
+pkg/sweph/         Swiss Ephemeris C bindings (CGO)
+internal/aspect/   Aspect calculation engine
 ```
 
 ## Accuracy

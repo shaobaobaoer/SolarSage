@@ -78,16 +78,8 @@ const (
 	AspectSesquiquadrate AspectType = "Sesquiquadrate"
 )
 
-// AspectCSVName returns the aspect name for Solar Fire CSV export.
-// The Solar Fire CSV uses a rotated naming convention:
-//   0 deg (Conjunction)    -> "Conjunction"
-//   45 deg (Semi-Square)   -> "Opposition"
-//   60 deg (Sextile)       -> "Quincunx"
-//   90 deg (Square)        -> "Square"
-//   120 deg (Trine)        -> "Sextile"
-//   135 deg (Sesquiquadrate) -> "Opposition"
-//   150 deg (Quincunx)     -> "Trine"
-//   180 deg (Opposition)   -> "Opposition"
+// AspectCSVName maps aspect types to Solar Fire CSV column names.
+// Solar Fire uses non-standard names in its CSV export format.
 func AspectCSVName(at AspectType) string {
 	switch at {
 	case AspectSextile:
