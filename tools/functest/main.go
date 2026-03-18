@@ -6,13 +6,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/anthropic/swisseph-mcp/pkg/chart"
-	"github.com/anthropic/swisseph-mcp/pkg/geo"
-	"github.com/anthropic/swisseph-mcp/pkg/julian"
-	"github.com/anthropic/swisseph-mcp/pkg/models"
-	"github.com/anthropic/swisseph-mcp/pkg/progressions"
-	"github.com/anthropic/swisseph-mcp/pkg/sweph"
-	"github.com/anthropic/swisseph-mcp/pkg/transit"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/chart"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/geo"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/julian"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/progressions"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/sweph"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/transit"
 )
 
 func main() {

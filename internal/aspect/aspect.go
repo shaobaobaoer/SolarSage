@@ -3,7 +3,7 @@ package aspect
 import (
 	"math"
 
-	"github.com/anthropic/swisseph-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
 )
 
 // AngleDiff returns the shortest angular distance between two ecliptic longitudes (0-180)

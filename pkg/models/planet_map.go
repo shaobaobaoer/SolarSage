@@ -1,6 +1,6 @@
 package models
 
-import "github.com/anthropic/swisseph-mcp/pkg/sweph"
+import "github.com/shaobaobaoer/solarsage-mcp/pkg/sweph"
 
 // planetSweIDMap is the pre-built mapping from PlanetID to Swiss Ephemeris planet number
 var planetSweIDMap = map[PlanetID]int{
@@ -36,6 +36,10 @@ var houseSystemCharMap = map[HouseSystem]int{
 	HouseCampanus:      sweph.HouseCampanus,
 	HouseRegiomontanus: sweph.HouseRegiomontanus,
 	HousePorphyry:      sweph.HousePorphyry,
+	HouseMorinus:       sweph.HouseMorinus,
+	HouseTopocentric:   sweph.HouseTopocentric,
+	HouseAlcabitius:    sweph.HouseAlcabitius,
+	HouseMeridian:      sweph.HouseMeridian,
 }
 
 // HouseSystemToChar maps HouseSystem to Swiss Ephemeris char code

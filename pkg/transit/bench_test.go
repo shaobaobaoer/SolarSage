@@ -3,7 +3,7 @@ package transit
 import (
 	"testing"
 
-	"github.com/anthropic/swisseph-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
 )
 
 func BenchmarkCalcTransitEvents_30Days(b *testing.B) {

@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/anthropic/swisseph-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
 )
 
 func TestAngleDiff(t *testing.T) {

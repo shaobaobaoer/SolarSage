@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anthropic/swisseph-mcp/pkg/chart"
-	"github.com/anthropic/swisseph-mcp/pkg/export"
-	"github.com/anthropic/swisseph-mcp/pkg/julian"
-	"github.com/anthropic/swisseph-mcp/pkg/models"
-	"github.com/anthropic/swisseph-mcp/pkg/sweph"
-	"github.com/anthropic/swisseph-mcp/pkg/transit"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/chart"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/export"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/julian"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/sweph"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/transit"
 )
 
 func main() {

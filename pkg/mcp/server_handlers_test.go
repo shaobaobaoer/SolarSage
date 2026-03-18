@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/anthropic/swisseph-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
 )
 
 func TestHandleCalcPlanetPosition_Direct(t *testing.T) {

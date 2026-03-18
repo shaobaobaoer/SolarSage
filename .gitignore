@@ -1,11 +1,13 @@
 # Build output
 bin/
+/api
 
 # Third-party dependencies (large ephemeris files)
 third_party/
 
 # Test coverage
 coverage.out
+coverage.html
 
 # IDE
 .idea/

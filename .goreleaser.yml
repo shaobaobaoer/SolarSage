@@ -1,7 +1,21 @@
 version: 2
 builds:
-  - main: ./cmd/server
-    binary: swisseph-mcp
+  - id: mcp
+    main: ./cmd/server
+    binary: solarsage-mcp
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+  - id: api
+    main: ./cmd/api
+    binary: solarsage-api
     env:
       - CGO_ENABLED=1
     goos:

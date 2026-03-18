@@ -3,21 +3,77 @@
 ## Build & Test
 
 ```bash
-make build        # Build binary to bin/swisseph-mcp
-make test         # Run all tests
+make build        # Build MCP server to bin/solarsage-mcp
+make build-api    # Build REST API server to bin/solarsage-api
+make test         # Run all tests (38 packages, 824+ tests)
+make test-race    # Run tests with race detector
 make test-cover   # Run tests with coverage report
+make cover-html   # Generate HTML coverage report
+make bench        # Run benchmarks
+make vet          # Run go vet
+make check        # Run vet + test
 make clean        # Remove build artifacts
 ```
 
 ## Architecture
 
-The project is a Go MCP server wrapping the Swiss Ephemeris C library via CGO.
+The project is a Go MCP server wrapping the Swiss Ephemeris C library via CGO. It's also usable as a standalone Go library.
 
-- `pkg/sweph/` - CGO bindings (thread-safe via mutex; Swiss Ephemeris is not thread-safe)
-- `pkg/chart/` - Chart calculations depend on `sweph` and `internal/aspect`
-- `pkg/transit/` - Transit engine depends on `chart`, `progressions`, `sweph`
-- `pkg/mcp/` - MCP protocol layer, depends on all `pkg/` packages
-- `internal/aspect/` - Pure Go aspect math, no external dependencies
+### Package Layers
+
+**High-level API:**
+- `pkg/solarsage/` - **Convenience API** (33 functions, datetime strings, sensible defaults)
+- `pkg/mcp/` - MCP protocol layer (40 tools)
+- `pkg/api/` - **RESTful HTTP API** (40 endpoints, JSON, CORS, API key auth)
+- `pkg/report/` - Comprehensive chart analysis report
+
+**Chart Calculations:**
+- `pkg/chart/` - Natal/synastry charts (11 house systems)
+- `pkg/transit/` - Transit event detection (7 types, 100% validated)
+- `pkg/progressions/` - Secondary progressions & solar arc
+- `pkg/returns/` - Solar/lunar return charts
+- `pkg/composite/` - Composite midpoint & Davison charts
+- `pkg/synastry/` - Compatibility scoring
+
+**Predictive Techniques:**
+- `pkg/primary/` - Primary Directions (Ptolemy semi-arc, Naibod key)
+- `pkg/symbolic/` - Symbolic Directions (1°/year, Naibod, Profection, custom rate)
+
+**Traditional Astrology:**
+- `pkg/dignity/` - Essential dignities, mutual receptions, sect, bonification & maltreatment
+- `pkg/heliacal/` - Heliacal risings/settings (Swiss Ephemeris visibility algorithms)
+- `pkg/dispositor/` - Dispositorship chains, final dispositor
+- `pkg/lots/` - 15+ Arabic lots with day/night reversal
+- `pkg/bounds/` - Chaldean decans, Egyptian terms
+- `pkg/profection/` - Annual/monthly profections
+- `pkg/firdaria/` - Firdaria planetary period system (day/night sequences)
+- `pkg/antiscia/` - Solstice/equinox mirror points
+- `pkg/planetary/` - Chaldean planetary hours
+
+**Analysis:**
+- `pkg/fixedstars/` - 50+ star catalog with conjunctions
+- `pkg/midpoint/` - Midpoints, 90deg dial, activations
+- `pkg/harmonic/` - Divisional charts (1-180)
+- `internal/aspect/` - Aspect math + 7 pattern types
+
+**Vedic:**
+- `pkg/vedic/` - Sidereal charts, 27 Nakshatras, Vimshottari Dasha
+- `pkg/divisional/` - 16 Varga charts (D1-D60, Navamsa, Dasamsa, etc.)
+- `pkg/ashtakavarga/` - Bindu tables, Sarvashtakavarga
+- `pkg/yoga/` - Yoga detection (Mahapurusha, Raja, Dhana, Gajakesari, etc.)
+
+**Astronomical:**
+- `pkg/lunar/` - Phases, eclipse detection
+
+**Visualization:**
+- `pkg/render/` - Chart wheel coordinates for SVG/Canvas
+
+**Infrastructure:**
+- `pkg/sweph/` - Swiss Ephemeris CGO bindings (thread-safe)
+- `pkg/models/` - Core types with Stringer interfaces
+- `pkg/julian/` - Julian Day / ISO 8601 conversions
+- `pkg/geo/` - Geocoding and timezone
+- `pkg/export/` - CSV/JSON export
 
 ## Key Constraints
 
@@ -32,3 +88,5 @@ Run all tests: `make test`
 The `pkg/transit/solarfire_test.go` validates against a Solar Fire reference CSV. This is the primary accuracy gate.
 
 Coverage tests (`*_coverage_test.go`) exercise edge cases for coverage metrics.
+
+Current: 38 packages, 824+ tests, race-free.

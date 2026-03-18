@@ -5,8 +5,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/anthropic/swisseph-mcp/pkg/models"
-	"github.com/anthropic/swisseph-mcp/pkg/sweph"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/sweph"
 )
 
 // DateTimeToJD converts an ISO 8601 datetime string to Julian Day (UT and TT)

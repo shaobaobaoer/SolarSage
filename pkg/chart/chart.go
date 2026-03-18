@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/anthropic/swisseph-mcp/internal/aspect"
-	"github.com/anthropic/swisseph-mcp/pkg/models"
-	"github.com/anthropic/swisseph-mcp/pkg/sweph"
+	"github.com/shaobaobaoer/solarsage-mcp/internal/aspect"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/sweph"
 )
 
 // CalcSingleChart computes a single chart (natal or event chart)
@@ -268,7 +268,18 @@ func calcLotOfSpirit(jdUT, asc float64) float64 {
 	return calcLot(jdUT, asc, sweph.SE_MOON, sweph.SE_SUN)
 }
 
+// IsDayChart checks if Sun is above the horizon at the given time.
+// Uses the Sun's longitude relative to the ASC-DSC axis.
+func IsDayChart(jdUT, asc float64) bool {
+	sunResult, err := sweph.CalcUT(jdUT, sweph.SE_SUN)
+	if err != nil {
+		return true // default to day
+	}
+	return isDayChart(sunResult.Longitude, asc)
+}
+
 // isDayChart checks if Sun is above the horizon (simplified check)
+// Retained as unexported for backward compatibility with tests.
 func isDayChart(sunLon, asc float64) bool {
 	dsc := sweph.NormalizeDegrees(asc + 180)
 	// Sun is above horizon if it's in the upper half (ASC counter-clockwise to DSC)

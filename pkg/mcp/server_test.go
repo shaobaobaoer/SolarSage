@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/anthropic/swisseph-mcp/pkg/sweph"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/sweph"
 )
 
 func TestMain(m *testing.M) {
@@ -35,8 +35,8 @@ func TestHandleInitialize(t *testing.T) {
 	if !ok {
 		t.Fatal("Result is not initializeResult")
 	}
-	if result.ServerInfo.Name != "swisseph-mcp" {
-		t.Errorf("Server name = %q, want swisseph-mcp", result.ServerInfo.Name)
+	if result.ServerInfo.Name != "solarsage-mcp" {
+		t.Errorf("Server name = %q, want solarsage-mcp", result.ServerInfo.Name)
 	}
 }
 
@@ -58,7 +58,7 @@ func TestHandleToolsList(t *testing.T) {
 	if !ok {
 		t.Fatal("Result is not toolsListResult")
 	}
-	expectedTools := []string{"geocode", "datetime_to_jd", "jd_to_datetime", "calc_planet_position", "calc_single_chart", "calc_double_chart", "calc_progressions", "calc_solar_arc", "calc_transit"}
+	expectedTools := []string{"geocode", "datetime_to_jd", "jd_to_datetime", "calc_planet_position", "calc_single_chart", "calc_double_chart", "calc_progressions", "calc_solar_arc", "calc_transit", "calc_solar_return", "calc_lunar_return", "calc_dignity", "calc_composite_chart", "calc_aspect_patterns", "calc_fixed_stars", "calc_midpoints", "calc_harmonic_chart", "calc_planetary_hours", "calc_profection", "calc_antiscia", "calc_lots", "calc_bounds", "calc_lunar_phase", "calc_lunar_phases", "calc_eclipses", "calc_synastry", "calc_dispositors", "calc_natal_report", "calc_sidereal_chart", "calc_vimshottari_dasha", "calc_chart_wheel", "calc_firdaria", "calc_davison_chart", "calc_primary_directions", "calc_divisional_chart", "calc_ashtakavarga", "calc_yogas", "calc_bonification", "calc_symbolic_directions", "calc_heliacal_events"}
 	if len(result.Tools) != len(expectedTools) {
 		t.Errorf("Expected %d tools, got %d", len(expectedTools), len(result.Tools))
 	}

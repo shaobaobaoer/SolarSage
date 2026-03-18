@@ -1,4 +1,4 @@
-module github.com/anthropic/swisseph-mcp
+module github.com/shaobaobaoer/solarsage-mcp
 
 go 1.25
 

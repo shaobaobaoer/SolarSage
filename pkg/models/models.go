@@ -53,6 +53,10 @@ const (
 	HouseCampanus      HouseSystem = "CAMPANUS"
 	HouseRegiomontanus HouseSystem = "REGIOMONTANUS"
 	HousePorphyry      HouseSystem = "PORPHYRY"
+	HouseMorinus       HouseSystem = "MORINUS"
+	HouseTopocentric   HouseSystem = "TOPOCENTRIC"
+	HouseAlcabitius    HouseSystem = "ALCABITIUS"
+	HouseMeridian      HouseSystem = "MERIDIAN"
 )
 
 // CalendarType represents calendar type
@@ -78,7 +82,7 @@ const (
 	AspectSesquiquadrate AspectType = "Sesquiquadrate"
 )
 
-// aspectCSVNames maps aspect types to Solar Fire CSV column names.
+// aspectCSVNames maps aspect types to CSV column names.
 var aspectCSVNames = map[AspectType]string{
 	AspectSextile:        "Quincunx",
 	AspectTrine:          "Sextile",
@@ -88,7 +92,7 @@ var aspectCSVNames = map[AspectType]string{
 	AspectOpposition:     "Quincunx",
 }
 
-// AspectCSVName maps aspect types to Solar Fire CSV column names.
+// AspectCSVName maps aspect types to CSV column names.
 func AspectCSVName(at AspectType) string {
 	if name, ok := aspectCSVNames[at]; ok {
 		return name
@@ -370,7 +374,7 @@ var ZodiacSigns = []string{
 	"Sagittarius", "Capricorn", "Aquarius", "Pisces",
 }
 
-// ZodiacAbbr maps sign index (0-11) to 3-letter abbreviation (Solar Fire style)
+// ZodiacAbbr maps sign index (0-11) to 3-letter abbreviation
 var ZodiacAbbr = []string{
 	"Ari", "Tau", "Gem", "Can",
 	"Leo", "Vir", "Lib", "Sco",
@@ -448,7 +452,7 @@ func FormatDMS(deg float64) string {
 	return ToDMS(deg).String()
 }
 
-// bodyDisplayNames maps internal IDs to display names (Solar Fire style)
+// bodyDisplayNames maps internal IDs to display names
 var bodyDisplayNames = map[string]string{
 	string(PlanetSun):           "Sun",
 	string(PlanetMoon):          "Moon",

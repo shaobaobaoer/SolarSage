@@ -7,9 +7,9 @@ import (
 	"math"
 	"testing"
 
-	"github.com/anthropic/swisseph-mcp/pkg/julian"
-	"github.com/anthropic/swisseph-mcp/pkg/models"
-	"github.com/anthropic/swisseph-mcp/pkg/sweph"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/julian"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/sweph"
 )
 
 // Birth data from plan.md: the user is born approximately 1997-11-07 in Perth (AWST = +08:00)

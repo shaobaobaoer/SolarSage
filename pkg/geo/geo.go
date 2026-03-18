@@ -11,7 +11,7 @@ import (
 
 	"github.com/ringsaturn/tzf"
 
-	"github.com/anthropic/swisseph-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
 )
 
 var finder tzf.F

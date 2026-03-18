@@ -4,10 +4,10 @@ import (
 	"math"
 	"sort"
 
-	"github.com/anthropic/swisseph-mcp/pkg/chart"
-	"github.com/anthropic/swisseph-mcp/pkg/models"
-	"github.com/anthropic/swisseph-mcp/pkg/progressions"
-	"github.com/anthropic/swisseph-mcp/pkg/sweph"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/chart"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/progressions"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/sweph"
 )
 
 const (
@@ -1081,7 +1081,7 @@ func findVoidOfCourse(events []models.TransitEvent, startJD, endJD float64) []mo
 
 	// Walk through events chronologically.
 	// VOC starts at the last aspect LEAVE (of any Tr-Tr aspect) before each sign ingress.
-	// This matches Solar Fire's VOC definition: the last major aspect the Moon makes
+	// Standard VOC definition: the last major aspect the Moon makes
 	// before entering the next sign.
 	for i := 0; i < len(moonEvts); i++ {
 		if !moonEvts[i].IsIngress {
@@ -1090,7 +1090,7 @@ func findVoidOfCourse(events []models.TransitEvent, startJD, endJD float64) []mo
 		ingressEvt := moonEvts[i]
 
 		// Find the last aspect event before this ingress (scanning backward)
-		// Priority: Leave > Exact > Enter (Solar Fire uses the last aspect event)
+		// Priority: Leave > Exact > Enter (uses the last aspect event)
 		var lastLeave *moonEvent
 		for j := i - 1; j >= 0; j-- {
 			if moonEvts[j].IsIngress {

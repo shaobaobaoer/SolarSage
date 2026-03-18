@@ -1,4 +1,4 @@
 package swisseph
 
-// Version is the current version of the swisseph-mcp module.
-const Version = "1.2.0"
+// Version is the current version of the solarsage-mcp module.
+const Version = "2.4.0"

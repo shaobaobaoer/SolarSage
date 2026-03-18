@@ -3,7 +3,7 @@ package chart
 import (
 	"testing"
 
-	"github.com/anthropic/swisseph-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
 )
 
 var defaultPlanets = []models.PlanetID{

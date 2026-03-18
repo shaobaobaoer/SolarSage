@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anthropic/swisseph-mcp/pkg/julian"
-	"github.com/anthropic/swisseph-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/julian"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
 )
 
 // CSVRow represents one row of transit CSV output
@@ -154,7 +154,7 @@ func EventToCSVRow(evt models.TransitEvent, tz string) CSVRow {
 	return row
 }
 
-// formatDeg formats a degree value for CSV output (Solar Fire style: trim trailing zeros, keep at least one decimal)
+// formatDeg formats a degree value for CSV output (trim trailing zeros, keep at least one decimal)
 func formatDeg(d float64) string {
 	s := fmt.Sprintf("%.3f", d)
 	// Trim trailing zeros after decimal point, but keep at least X.Y format
@@ -206,6 +206,197 @@ func EventsToJSON(events []models.TransitEvent) (string, error) {
 	data, err := json.MarshalIndent(map[string]interface{}{
 		"events": events,
 	}, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// === Chart Export (CSV/JSON for any chart type) ===
+
+// ChartToCSV exports a natal chart as CSV with planet positions
+func ChartToCSV(chart *models.ChartInfo) string {
+	var sb strings.Builder
+	sb.WriteString("Planet,Longitude,Sign,SignDegree,House,Speed,Retrograde,Glyph\n")
+	for _, p := range chart.Planets {
+		sb.WriteString(fmt.Sprintf("%s,%.4f,%s,%.4f,%d,%.6f,%t,%s\n",
+			models.BodyDisplayName(string(p.PlanetID)),
+			p.Longitude, p.Sign, p.SignDegree,
+			p.House, p.Speed, p.IsRetrograde,
+			models.PlanetGlyph(p.PlanetID),
+		))
+	}
+	return sb.String()
+}
+
+// ChartToJSON exports a natal chart as pretty JSON
+func ChartToJSON(chart *models.ChartInfo) (string, error) {
+	data, err := json.MarshalIndent(chart, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// AspectsToCSV exports aspects as CSV
+func AspectsToCSV(aspects []models.AspectInfo) string {
+	var sb strings.Builder
+	sb.WriteString("PlanetA,PlanetB,Aspect,Angle,ActualAngle,Orb,Applying,Glyph\n")
+	for _, a := range aspects {
+		sb.WriteString(fmt.Sprintf("%s,%s,%s,%.1f,%.4f,%.4f,%t,%s\n",
+			models.BodyDisplayName(a.PlanetA),
+			models.BodyDisplayName(a.PlanetB),
+			a.AspectType, a.AspectAngle, a.ActualAngle,
+			a.Orb, a.IsApplying,
+			models.AspectGlyph(a.AspectType),
+		))
+	}
+	return sb.String()
+}
+
+// CrossAspectsToCSV exports cross-aspects as CSV
+func CrossAspectsToCSV(aspects []models.CrossAspectInfo) string {
+	var sb strings.Builder
+	sb.WriteString("InnerBody,OuterBody,Aspect,Angle,ActualAngle,Orb,Applying,Glyph\n")
+	for _, a := range aspects {
+		sb.WriteString(fmt.Sprintf("%s,%s,%s,%.1f,%.4f,%.4f,%t,%s\n",
+			models.BodyDisplayName(a.InnerBody),
+			models.BodyDisplayName(a.OuterBody),
+			a.AspectType, a.AspectAngle, a.ActualAngle,
+			a.Orb, a.IsApplying,
+			models.AspectGlyph(a.AspectType),
+		))
+	}
+	return sb.String()
+}
+
+// HousesToCSV exports house cusps as CSV
+func HousesToCSV(houses []float64, angles models.AnglesInfo) string {
+	var sb strings.Builder
+	sb.WriteString("House,Longitude,Sign,SignDegree\n")
+	for i, lon := range houses {
+		sb.WriteString(fmt.Sprintf("%d,%.4f,%s,%.4f\n",
+			i+1, lon,
+			models.SignFromLongitude(lon),
+			models.SignDegreeFromLongitude(lon),
+		))
+	}
+	sb.WriteString(fmt.Sprintf("ASC,%.4f,%s,%.4f\n", angles.ASC, models.SignFromLongitude(angles.ASC), models.SignDegreeFromLongitude(angles.ASC)))
+	sb.WriteString(fmt.Sprintf("MC,%.4f,%s,%.4f\n", angles.MC, models.SignFromLongitude(angles.MC), models.SignDegreeFromLongitude(angles.MC)))
+	return sb.String()
+}
+
+// PositionsToCSV exports a slice of planet positions as CSV (generic, works for progressions/solar arc/etc.)
+func PositionsToCSV(positions []models.PlanetPosition) string {
+	var sb strings.Builder
+	sb.WriteString("Planet,Longitude,Sign,SignDegree,Speed,Retrograde,Glyph\n")
+	for _, p := range positions {
+		sb.WriteString(fmt.Sprintf("%s,%.4f,%s,%.4f,%.6f,%t,%s\n",
+			models.BodyDisplayName(string(p.PlanetID)),
+			p.Longitude, p.Sign, p.SignDegree,
+			p.Speed, p.IsRetrograde,
+			models.PlanetGlyph(p.PlanetID),
+		))
+	}
+	return sb.String()
+}
+
+// DignityToCSV exports dignity analysis as CSV
+func DignityToCSV(dignities interface{}) string {
+	data, _ := json.Marshal(dignities)
+	var items []struct {
+		PlanetID    string   `json:"planet_id"`
+		Sign        string   `json:"sign"`
+		Score       int      `json:"score"`
+		Ruler       string   `json:"ruler"`
+		Exalted     bool     `json:"exalted"`
+		InDetriment bool     `json:"in_detriment"`
+		InFall      bool     `json:"in_fall"`
+		Dignities   []string `json:"dignities"`
+	}
+	json.Unmarshal(data, &items)
+
+	var sb strings.Builder
+	sb.WriteString("Planet,Sign,Score,Ruler,Exalted,Detriment,Fall,Dignities,Glyph\n")
+	for _, d := range items {
+		sb.WriteString(fmt.Sprintf("%s,%s,%d,%s,%t,%t,%t,%s,%s\n",
+			models.BodyDisplayName(d.PlanetID), d.Sign, d.Score,
+			models.BodyDisplayName(d.Ruler),
+			d.Exalted, d.InDetriment, d.InFall,
+			strings.Join(d.Dignities, ";"),
+			models.PlanetGlyph(models.PlanetID(d.PlanetID)),
+		))
+	}
+	return sb.String()
+}
+
+// LotsToCSV exports Arabic lots as CSV
+func LotsToCSV(lotsData interface{}) string {
+	data, _ := json.Marshal(lotsData)
+	var items []struct {
+		Name      string  `json:"name"`
+		Longitude float64 `json:"longitude"`
+		Sign      string  `json:"sign"`
+		SignDeg   float64 `json:"sign_degree"`
+		Formula   string  `json:"formula"`
+	}
+	json.Unmarshal(data, &items)
+
+	var sb strings.Builder
+	sb.WriteString("Lot,Longitude,Sign,SignDegree,Formula\n")
+	for _, l := range items {
+		sb.WriteString(fmt.Sprintf("%s,%.4f,%s,%.4f,%s\n",
+			l.Name, l.Longitude, l.Sign, l.SignDeg, l.Formula))
+	}
+	return sb.String()
+}
+
+// EclipsesToCSV exports eclipses as CSV
+func EclipsesToCSV(eclipses interface{}) string {
+	data, _ := json.Marshal(eclipses)
+	var items []struct {
+		Type    string  `json:"type"`
+		JD      float64 `json:"jd"`
+		MoonLon float64 `json:"moon_longitude"`
+		MoonSign string `json:"moon_sign"`
+		SunSign  string `json:"sun_sign"`
+		MoonLat  float64 `json:"moon_latitude"`
+	}
+	json.Unmarshal(data, &items)
+
+	var sb strings.Builder
+	sb.WriteString("Type,JD,MoonLongitude,MoonSign,SunSign,MoonLatitude\n")
+	for _, e := range items {
+		sb.WriteString(fmt.Sprintf("%s,%.6f,%.4f,%s,%s,%.4f\n",
+			e.Type, e.JD, e.MoonLon, e.MoonSign, e.SunSign, e.MoonLat))
+	}
+	return sb.String()
+}
+
+// LunarPhasesToCSV exports lunar phases as CSV
+func LunarPhasesToCSV(phases interface{}) string {
+	data, _ := json.Marshal(phases)
+	var items []struct {
+		Phase    string  `json:"phase"`
+		JD       float64 `json:"jd"`
+		MoonLon  float64 `json:"moon_longitude"`
+		MoonSign string  `json:"moon_sign"`
+		SunSign  string  `json:"sun_sign"`
+	}
+	json.Unmarshal(data, &items)
+
+	var sb strings.Builder
+	sb.WriteString("Phase,JD,MoonLongitude,MoonSign,SunSign\n")
+	for _, p := range items {
+		sb.WriteString(fmt.Sprintf("%s,%.6f,%.4f,%s,%s\n",
+			p.Phase, p.JD, p.MoonLon, p.MoonSign, p.SunSign))
+	}
+	return sb.String()
+}
+
+// ToJSON is a generic helper that exports any value as pretty JSON
+func ToJSON(v interface{}) (string, error) {
+	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return "", err
 	}

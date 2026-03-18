@@ -22,6 +22,12 @@ static int houses(double jd_ut, double lat, double lon, int hsys, double *cusps,
 static double house_pos(double armc, double geolat, double eps, int hsys, double *xpin, char *serr) {
     return swe_house_pos(armc, geolat, eps, hsys, xpin, serr);
 }
+
+// Wrapper for heliacal rising/setting
+static int heliacal_ut(double jd_start, double *dgeo, double *datm, double *dobs,
+                        char *object_name, int type_event, int iflag, double *dret, char *serr) {
+    return swe_heliacal_ut(jd_start, dgeo, datm, dobs, object_name, type_event, iflag, dret, serr);
+}
 */
 import "C"
 import (
@@ -66,6 +72,10 @@ const (
 	HouseCampanus       = 'C'
 	HouseRegiomontanus  = 'R'
 	HousePorphyry       = 'O'
+	HouseMorinus        = 'M'
+	HouseTopocentric    = 'T' // Polich-Page
+	HouseAlcabitius     = 'B'
+	HouseMeridian       = 'X' // Axial rotation / Meridian
 )
 
 // CalcResult holds the result of a planet calculation
@@ -231,4 +241,67 @@ func NormalizeDegrees(deg float64) float64 {
 		deg += 360.0
 	}
 	return deg
+}
+
+// Heliacal event type constants
+const (
+	SE_HELIACAL_RISING  = 1
+	SE_HELIACAL_SETTING = 2
+	SE_EVENING_FIRST    = 3
+	SE_MORNING_LAST     = 4
+)
+
+// HeliacalResult holds the result of a heliacal event calculation
+type HeliacalResult struct {
+	JDStart   float64 // Start of visibility event
+	JDOptimum float64 // Optimal observation time
+	JDEnd     float64 // End of visibility event
+}
+
+// HeliacalUT finds the next heliacal event for an object after jdStart.
+// geoLon, geoLat, geoAlt are the observer's geographic coordinates (degrees, meters).
+// objectName is the planet name (e.g., "venus", "mercury").
+// eventType is one of SE_HELIACAL_RISING, SE_HELIACAL_SETTING, SE_EVENING_FIRST, SE_MORNING_LAST.
+func HeliacalUT(jdStart float64, geoLon, geoLat, geoAlt float64, objectName string, eventType int) (*HeliacalResult, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	var dgeo [3]C.double
+	dgeo[0] = C.double(geoLon)
+	dgeo[1] = C.double(geoLat)
+	dgeo[2] = C.double(geoAlt)
+
+	// Default atmospheric conditions
+	var datm [4]C.double
+	datm[0] = C.double(1013.25) // pressure (mbar)
+	datm[1] = C.double(15)      // temperature (C)
+	datm[2] = C.double(40)      // humidity (%)
+	datm[3] = C.double(0.25)    // extinction coefficient (mag/airdeg)
+
+	// Default observer parameters
+	var dobs [6]C.double
+	dobs[0] = C.double(36) // age
+	dobs[1] = C.double(1)  // Snellen ratio
+	dobs[2] = C.double(0)  // telescope aperture (mm), 0 = naked eye
+	dobs[3] = C.double(0)  // magnification
+	dobs[4] = C.double(0)  // optical type (0 = naked eye)
+	dobs[5] = C.double(0)  // field of view (deg)
+
+	cName := C.CString(objectName)
+	defer C.free(unsafe.Pointer(cName))
+
+	var dret [50]C.double
+	var serr [256]C.char
+
+	ret := C.heliacal_ut(C.double(jdStart), &dgeo[0], &datm[0], &dobs[0],
+		cName, C.int(eventType), C.int(0), &dret[0], &serr[0])
+	if ret < 0 {
+		return nil, fmt.Errorf("swe_heliacal_ut error: %s", C.GoString(&serr[0]))
+	}
+
+	return &HeliacalResult{
+		JDStart:   float64(dret[0]),
+		JDOptimum: float64(dret[1]),
+		JDEnd:     float64(dret[2]),
+	}, nil
 }

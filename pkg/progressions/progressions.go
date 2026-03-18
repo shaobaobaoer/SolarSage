@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/anthropic/swisseph-mcp/pkg/chart"
-	"github.com/anthropic/swisseph-mcp/pkg/models"
-	"github.com/anthropic/swisseph-mcp/pkg/sweph"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/chart"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/models"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/sweph"
 )
 
 // JulianYear is the length of one Julian year in days
@@ -113,7 +113,7 @@ func ascFromRAMC(ramc, obliquity, geoLat float64) float64 {
 
 // CalcProgressedAngles computes progressed ASC and MC.
 // Uses solar arc in longitude for MC, then derives ASC from the RAMC of the progressed MC.
-// This matches Solar Fire's standard secondary progression angle method.
+// Uses the standard Solar Arc in RA method for progressed angles.
 func CalcProgressedAngles(natalJD, transitJD, geoLat, geoLon float64, hsys models.HouseSystem) (asc, mc float64, err error) {
 	// Get obliquity at natal epoch
 	eps, err := sweph.Obliquity(natalJD)

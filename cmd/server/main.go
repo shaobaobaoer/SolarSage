@@ -5,20 +5,20 @@ import (
 	"os"
 	"path/filepath"
 
-	swisseph "github.com/anthropic/swisseph-mcp"
-	"github.com/anthropic/swisseph-mcp/pkg/mcp"
+	swisseph "github.com/shaobaobaoer/solarsage-mcp"
+	"github.com/shaobaobaoer/solarsage-mcp/pkg/mcp"
 )
 
 func main() {
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "--version", "-v":
-			fmt.Printf("swisseph-mcp %s\n", swisseph.Version)
+			fmt.Printf("solarsage-mcp %s\n", swisseph.Version)
 			return
 		case "--help", "-h":
-			fmt.Println("swisseph-mcp - Astrology MCP server powered by Swiss Ephemeris")
+			fmt.Println("solarsage-mcp - Astrology MCP server powered by Swiss Ephemeris")
 			fmt.Printf("Version: %s\n\n", swisseph.Version)
-			fmt.Println("Usage: swisseph-mcp [options]")
+			fmt.Println("Usage: solarsage-mcp [options]")
 			fmt.Println()
 			fmt.Println("Options:")
 			fmt.Println("  --version, -v  Print version")
