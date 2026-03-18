@@ -454,58 +454,39 @@ func FormatDMS(deg float64) string {
 	return ToDMS(deg).String()
 }
 
+// bodyDisplayNames maps internal IDs to display names (Solar Fire style)
+var bodyDisplayNames = map[string]string{
+	string(PlanetSun):           "Sun",
+	string(PlanetMoon):          "Moon",
+	string(PlanetMercury):       "Mercury",
+	string(PlanetVenus):         "Venus",
+	string(PlanetMars):          "Mars",
+	string(PlanetJupiter):       "Jupiter",
+	string(PlanetSaturn):        "Saturn",
+	string(PlanetUranus):        "Uranus",
+	string(PlanetNeptune):       "Neptune",
+	string(PlanetPluto):         "Pluto",
+	string(PlanetChiron):        "Chiron",
+	string(PlanetNorthNodeTrue): "NorthNode",
+	string(PlanetNorthNodeMean): "NorthNode",
+	string(PlanetSouthNode):     "SouthNode",
+	string(PlanetLilithMean):    "Lilith",
+	string(PlanetLilithTrue):    "Lilith",
+	string(PointASC):            "ASC",
+	string(PointMC):             "MC",
+	string(PointDSC):            "DSC",
+	string(PointIC):             "IC",
+	string(PointVertex):         "Vertex",
+	string(PointAntiVertex):     "AntiVertex",
+	string(PointEastPoint):      "EastPoint",
+	string(PointLotFortune):     "LotFortune",
+	string(PointLotSpirit):      "LotSpirit",
+}
+
 // BodyDisplayName returns the display name for a planet or special point ID string.
-// Maps internal IDs like "NORTH_NODE_TRUE" to Solar Fire style "NorthNode".
 func BodyDisplayName(id string) string {
-	switch PlanetID(id) {
-	case PlanetSun:
-		return "Sun"
-	case PlanetMoon:
-		return "Moon"
-	case PlanetMercury:
-		return "Mercury"
-	case PlanetVenus:
-		return "Venus"
-	case PlanetMars:
-		return "Mars"
-	case PlanetJupiter:
-		return "Jupiter"
-	case PlanetSaturn:
-		return "Saturn"
-	case PlanetUranus:
-		return "Uranus"
-	case PlanetNeptune:
-		return "Neptune"
-	case PlanetPluto:
-		return "Pluto"
-	case PlanetChiron:
-		return "Chiron"
-	case PlanetNorthNodeTrue, PlanetNorthNodeMean:
-		return "NorthNode"
-	case PlanetSouthNode:
-		return "SouthNode"
-	case PlanetLilithMean, PlanetLilithTrue:
-		return "Lilith"
-	}
-	switch SpecialPointID(id) {
-	case PointASC:
-		return "ASC"
-	case PointMC:
-		return "MC"
-	case PointDSC:
-		return "DSC"
-	case PointIC:
-		return "IC"
-	case PointVertex:
-		return "Vertex"
-	case PointAntiVertex:
-		return "AntiVertex"
-	case PointEastPoint:
-		return "EastPoint"
-	case PointLotFortune:
-		return "LotFortune"
-	case PointLotSpirit:
-		return "LotSpirit"
+	if name, ok := bodyDisplayNames[id]; ok {
+		return name
 	}
 	return id
 }
