@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/anthropic/swisseph-mcp/pkg/chart"
 	"github.com/anthropic/swisseph-mcp/pkg/export"
@@ -356,6 +357,18 @@ func makeKey(date, p1, p2, aspect, pairType string) string {
 	return fmt.Sprintf("%s|%s|%s|%s|%s", date, p1, p2, aspect, pairType)
 }
 
+// makeFuzzyKeys creates keys for date, date-1, date+1 to handle timezone edge cases
+func makeFuzzyKeys(date, p1, p2, aspect, pairType string) []string {
+	keys := []string{makeKey(date, p1, p2, aspect, pairType)}
+	t, err := time.Parse("2006-01-02", date)
+	if err == nil {
+		keys = append(keys,
+			makeKey(t.AddDate(0, 0, -1).Format("2006-01-02"), p1, p2, aspect, pairType),
+			makeKey(t.AddDate(0, 0, 1).Format("2006-01-02"), p1, p2, aspect, pairType))
+	}
+	return keys
+}
+
 func matchExactEvents(sfRows [][]string, computedEvents []models.TransitEvent) {
 	// Build lookup for computed Exact events
 	computedExacts := make(map[string]models.TransitEvent)
@@ -377,17 +390,22 @@ func matchExactEvents(sfRows [][]string, computedEvents []models.TransitEvent) {
 			continue
 		}
 		sfExactCount++
-		key := makeKey(sfRow[7], sfRow[0], sfRow[3], sfRow[2], sfRow[6])
-		if ce, ok := computedExacts[key]; ok {
-			matched++
-			// Show time comparison for first few matches
-			if matched <= 5 {
-				row := export.EventToCSVRow(ce, "Australia/Perth")
-				fmt.Printf("  MATCH: SF %s %s %s %s %s %s | Computed %s %s %s\n",
-					sfRow[7], sfRow[8], sfRow[0], sfRow[2], sfRow[3], sfRow[6],
-					row.Date, row.Time, row.Aspect)
+		keys := makeFuzzyKeys(sfRow[7], sfRow[0], sfRow[3], sfRow[2], sfRow[6])
+		found := false
+		for _, key := range keys {
+			if ce, ok := computedExacts[key]; ok {
+				matched++
+				if matched <= 5 {
+					row := export.EventToCSVRow(ce, "Australia/Perth")
+					fmt.Printf("  MATCH: SF %s %s %s %s %s %s | Computed %s %s %s\n",
+						sfRow[7], sfRow[8], sfRow[0], sfRow[2], sfRow[3], sfRow[6],
+						row.Date, row.Time, row.Aspect)
+				}
+				found = true
+				break
 			}
-		} else {
+		}
+		if !found {
 			if unmatched < 30 {
 				fmt.Printf("  SF unmatched: %s %s %s %s %s %s\n",
 					sfRow[7], sfRow[8], sfRow[0], sfRow[2], sfRow[3], sfRow[6])
