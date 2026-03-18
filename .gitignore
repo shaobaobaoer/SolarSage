@@ -17,5 +17,8 @@ coverage.out
 .DS_Store
 Thumbs.db
 
+# Misc
+nohup.out
+
 # Claude project files
 .claude/
