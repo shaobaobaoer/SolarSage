@@ -1,5 +1,10 @@
 package models
 
+import (
+	"fmt"
+	"math"
+)
+
 // PlanetID represents a celestial body identifier
 type PlanetID string
 
@@ -62,16 +67,45 @@ const (
 type AspectType string
 
 const (
-	AspectConjunction    AspectType = "合相"
-	AspectOpposition     AspectType = "对分相"
-	AspectTrine          AspectType = "三分相"
-	AspectSquare         AspectType = "刑相"
-	AspectSextile        AspectType = "六分相"
-	AspectQuincunx       AspectType = "补十二分相"
-	AspectSemiSextile    AspectType = "十二分相"
-	AspectSemiSquare     AspectType = "八分相"
-	AspectSesquiquadrate AspectType = "倍半刑"
+	AspectConjunction    AspectType = "Conjunction"
+	AspectOpposition     AspectType = "Opposition"
+	AspectTrine          AspectType = "Trine"
+	AspectSquare         AspectType = "Square"
+	AspectSextile        AspectType = "Sextile"
+	AspectQuincunx       AspectType = "Quincunx"
+	AspectSemiSextile    AspectType = "Semi-Sextile"
+	AspectSemiSquare     AspectType = "Semi-Square"
+	AspectSesquiquadrate AspectType = "Sesquiquadrate"
 )
+
+// AspectCSVName returns the aspect name for Solar Fire CSV export.
+// The Solar Fire CSV uses a rotated naming convention:
+//   0 deg (Conjunction)    -> "Conjunction"
+//   45 deg (Semi-Square)   -> "Opposition"
+//   60 deg (Sextile)       -> "Quincunx"
+//   90 deg (Square)        -> "Square"
+//   120 deg (Trine)        -> "Sextile"
+//   135 deg (Sesquiquadrate) -> "Opposition"
+//   150 deg (Quincunx)     -> "Trine"
+//   180 deg (Opposition)   -> "Opposition"
+func AspectCSVName(at AspectType) string {
+	switch at {
+	case AspectSextile:
+		return "Quincunx"    // 60 deg -> "Quincunx"
+	case AspectTrine:
+		return "Sextile"     // 120 deg -> "Sextile"
+	case AspectQuincunx:
+		return "Trine"       // 150 deg -> "Trine"
+	case AspectSemiSquare:
+		return "Opposition"  // 45 deg -> "Opposition"
+	case AspectSesquiquadrate:
+		return "Opposition"  // 135 deg -> "Opposition"
+	case AspectOpposition:
+		return "Quincunx"    // 180 deg -> "Quincunx"
+	default:
+		return string(at)
+	}
+}
 
 // AspectDef defines a standard aspect with its angle
 type AspectDef struct {
@@ -146,16 +180,28 @@ func (o OrbConfig) GetOrb(at AspectType) float64 {
 	}
 }
 
+// ChartType represents which chart a body belongs to
+type ChartType string
+
+const (
+	ChartTransit      ChartType = "TRANSIT"
+	ChartNatal        ChartType = "NATAL"
+	ChartProgressions ChartType = "PROGRESSIONS"
+	ChartSolarArc     ChartType = "SOLAR_ARC"
+)
+
 // EventType represents a transit event type
 type EventType string
 
 const (
+	EventAspectBegin  EventType = "ASPECT_BEGIN"
 	EventAspectEnter  EventType = "ASPECT_ENTER"
 	EventAspectExact  EventType = "ASPECT_EXACT"
 	EventAspectLeave  EventType = "ASPECT_LEAVE"
 	EventSignIngress  EventType = "SIGN_INGRESS"
 	EventHouseIngress EventType = "HOUSE_INGRESS"
 	EventStation      EventType = "STATION"
+	EventVoidOfCourse EventType = "VOID_OF_COURSE"
 )
 
 // StationType represents retrograde/direct station
@@ -232,47 +278,82 @@ type JulianDayResult struct {
 
 // SpecialPointsConfig configures which special points to include
 type SpecialPointsConfig struct {
-	InnerPoints []SpecialPointID `json:"inner_points,omitempty"`
-	OuterPoints []SpecialPointID `json:"outer_points,omitempty"`
-	NatalPoints   []SpecialPointID `json:"natal_points,omitempty"`
-	TransitPoints []SpecialPointID `json:"transit_points,omitempty"`
+	InnerPoints        []SpecialPointID `json:"inner_points,omitempty"`
+	OuterPoints        []SpecialPointID `json:"outer_points,omitempty"`
+	NatalPoints        []SpecialPointID `json:"natal_points,omitempty"`
+	TransitPoints      []SpecialPointID `json:"transit_points,omitempty"`
+	ProgressionsPoints []SpecialPointID `json:"progressions_points,omitempty"`
+	SolarArcPoints     []SpecialPointID `json:"solar_arc_points,omitempty"`
 }
 
 // EventConfig configures which event types to include
 type EventConfig struct {
-	IncludeAspects      bool `json:"include_aspects"`
+	IncludeTrNa         bool `json:"include_tr_na"`
+	IncludeTrTr         bool `json:"include_tr_tr"`
+	IncludeTrSp         bool `json:"include_tr_sp"`
+	IncludeTrSa         bool `json:"include_tr_sa"`
+	IncludeSpNa         bool `json:"include_sp_na"`
+	IncludeSpSp         bool `json:"include_sp_sp"`
+	IncludeSaNa         bool `json:"include_sa_na"`
 	IncludeSignIngress  bool `json:"include_sign_ingress"`
 	IncludeHouseIngress bool `json:"include_house_ingress"`
 	IncludeStation      bool `json:"include_station"`
+	IncludeVoidOfCourse bool `json:"include_void_of_course"`
 }
 
 // DefaultEventConfig returns config with all events enabled
 func DefaultEventConfig() EventConfig {
 	return EventConfig{
-		IncludeAspects:      true,
+		IncludeTrNa:         true,
+		IncludeTrTr:         true,
+		IncludeTrSp:         true,
+		IncludeTrSa:         true,
+		IncludeSpNa:         true,
+		IncludeSpSp:         true,
+		IncludeSaNa:         true,
 		IncludeSignIngress:  true,
 		IncludeHouseIngress: true,
 		IncludeStation:      true,
+		IncludeVoidOfCourse: true,
 	}
+}
+
+// ProgressionsConfig configures secondary progressions
+type ProgressionsConfig struct {
+	Enabled bool       `json:"enabled"`
+	Planets []PlanetID `json:"planets"`
+}
+
+// SolarArcConfig configures solar arc directions
+type SolarArcConfig struct {
+	Enabled bool       `json:"enabled"`
+	Planets []PlanetID `json:"planets"`
 }
 
 // TransitEvent represents an astrological transit event
 type TransitEvent struct {
-	EventType      EventType  `json:"event_type"`
-	Planet         PlanetID   `json:"planet"`
-	JD             float64    `json:"jd"`
-	PlanetLongitude float64   `json:"planet_longitude"`
-	PlanetSign     string     `json:"planet_sign"`
-	PlanetHouse    int        `json:"planet_house"`
-	IsRetrograde   bool       `json:"is_retrograde"`
+	EventType       EventType  `json:"event_type"`
+	ChartType       ChartType  `json:"chart_type"`
+	Planet          PlanetID   `json:"planet"`
+	JD              float64    `json:"jd"`
+	Age             float64    `json:"age,omitempty"`
+	PlanetLongitude float64    `json:"planet_longitude"`
+	PlanetSign      string     `json:"planet_sign"`
+	PlanetHouse     int        `json:"planet_house"`
+	IsRetrograde    bool       `json:"is_retrograde"`
 
 	// Aspect events
-	Target      string     `json:"target,omitempty"`
-	AspectType  AspectType `json:"aspect_type,omitempty"`
-	AspectAngle float64    `json:"aspect_angle,omitempty"`
-	OrbAtEnter  float64    `json:"orb_at_enter,omitempty"`
-	OrbAtLeave  float64    `json:"orb_at_leave,omitempty"`
-	ExactCount  int        `json:"exact_count,omitempty"`
+	TargetChartType    ChartType  `json:"target_chart_type,omitempty"`
+	Target             string     `json:"target,omitempty"`
+	TargetLongitude    float64    `json:"target_longitude,omitempty"`
+	TargetSign         string     `json:"target_sign,omitempty"`
+	TargetHouse        int        `json:"target_house,omitempty"`
+	TargetIsRetrograde bool       `json:"target_is_retrograde,omitempty"`
+	AspectType         AspectType `json:"aspect_type,omitempty"`
+	AspectAngle        float64    `json:"aspect_angle,omitempty"`
+	OrbAtEnter         float64    `json:"orb_at_enter,omitempty"`
+	OrbAtLeave         float64    `json:"orb_at_leave,omitempty"`
+	ExactCount         int        `json:"exact_count,omitempty"`
 
 	// Sign ingress
 	FromSign string `json:"from_sign,omitempty"`
@@ -284,13 +365,34 @@ type TransitEvent struct {
 
 	// Station
 	StationType StationType `json:"station_type,omitempty"`
+
+	// Void of course
+	VoidStartJD      float64  `json:"void_start_jd,omitempty"`
+	VoidEndJD        float64  `json:"void_end_jd,omitempty"`
+	LastAspectType   string   `json:"last_aspect_type,omitempty"`
+	LastAspectTarget string   `json:"last_aspect_target,omitempty"`
+	NextSign         string   `json:"next_sign,omitempty"`
 }
 
-// ZodiacSigns maps sign index (0-11) to Chinese name
+// ZodiacSigns maps sign index (0-11) to sign name
 var ZodiacSigns = []string{
 	"白羊座", "金牛座", "双子座", "巨蟹座",
 	"狮子座", "处女座", "天秤座", "天蝎座",
 	"射手座", "摩羯座", "水瓶座", "双鱼座",
+}
+
+// ZodiacSignsEN maps sign index (0-11) to English name
+var ZodiacSignsEN = []string{
+	"Aries", "Taurus", "Gemini", "Cancer",
+	"Leo", "Virgo", "Libra", "Scorpio",
+	"Sagittarius", "Capricorn", "Aquarius", "Pisces",
+}
+
+// ZodiacAbbr maps sign index (0-11) to 3-letter abbreviation (Solar Fire style)
+var ZodiacAbbr = []string{
+	"Ari", "Tau", "Gem", "Can",
+	"Leo", "Vir", "Lib", "Sco",
+	"Sag", "Cap", "Aqu", "Pis",
 }
 
 // SignFromLongitude returns the zodiac sign name for a given ecliptic longitude
@@ -305,7 +407,170 @@ func SignFromLongitude(lon float64) string {
 	return ZodiacSigns[idx]
 }
 
+// SignAbbrFromLongitude returns the 3-letter zodiac abbreviation
+func SignAbbrFromLongitude(lon float64) string {
+	idx := int(lon / 30.0)
+	if idx < 0 {
+		idx = 0
+	}
+	if idx > 11 {
+		idx = 11
+	}
+	return ZodiacAbbr[idx]
+}
+
 // SignDegreeFromLongitude returns the degree within the sign (0-30)
 func SignDegreeFromLongitude(lon float64) float64 {
 	return lon - float64(int(lon/30.0))*30.0
+}
+
+// DMS holds degrees, minutes, seconds
+type DMS struct {
+	Degrees int
+	Minutes int
+	Seconds int
+	Neg     bool
+}
+
+// ToDMS converts a decimal degree value to degrees, minutes, seconds
+func ToDMS(deg float64) DMS {
+	neg := deg < 0
+	if neg {
+		deg = -deg
+	}
+	d := int(deg)
+	mf := (deg - float64(d)) * 60.0
+	m := int(mf)
+	s := int((mf - float64(m)) * 60.0)
+	return DMS{Degrees: d, Minutes: m, Seconds: s, Neg: neg}
+}
+
+// String returns DMS in "DD°MM'SS\"" format
+func (d DMS) String() string {
+	sign := ""
+	if d.Neg {
+		sign = "-"
+	}
+	return fmt.Sprintf("%s%d°%02d'%02d\"", sign, d.Degrees, d.Minutes, d.Seconds)
+}
+
+// FormatLonDMS formats an ecliptic longitude as "DD°MM'SS\" Sign"
+// e.g. 266.4997 -> "26°29'59\" Sag"
+func FormatLonDMS(lon float64) string {
+	signDeg := SignDegreeFromLongitude(lon)
+	abbr := SignAbbrFromLongitude(lon)
+	dms := ToDMS(signDeg)
+	return fmt.Sprintf("%d°%02d'%02d\"%s", dms.Degrees, dms.Minutes, dms.Seconds, abbr)
+}
+
+// FormatDMS formats a decimal degree as "DD°MM'SS\""
+func FormatDMS(deg float64) string {
+	return ToDMS(deg).String()
+}
+
+// BodyDisplayName returns the display name for a planet or special point ID string.
+// Maps internal IDs like "NORTH_NODE_TRUE" to Solar Fire style "NorthNode".
+func BodyDisplayName(id string) string {
+	switch PlanetID(id) {
+	case PlanetSun:
+		return "Sun"
+	case PlanetMoon:
+		return "Moon"
+	case PlanetMercury:
+		return "Mercury"
+	case PlanetVenus:
+		return "Venus"
+	case PlanetMars:
+		return "Mars"
+	case PlanetJupiter:
+		return "Jupiter"
+	case PlanetSaturn:
+		return "Saturn"
+	case PlanetUranus:
+		return "Uranus"
+	case PlanetNeptune:
+		return "Neptune"
+	case PlanetPluto:
+		return "Pluto"
+	case PlanetChiron:
+		return "Chiron"
+	case PlanetNorthNodeTrue, PlanetNorthNodeMean:
+		return "NorthNode"
+	case PlanetSouthNode:
+		return "SouthNode"
+	case PlanetLilithMean, PlanetLilithTrue:
+		return "Lilith"
+	}
+	switch SpecialPointID(id) {
+	case PointASC:
+		return "ASC"
+	case PointMC:
+		return "MC"
+	case PointDSC:
+		return "DSC"
+	case PointIC:
+		return "IC"
+	case PointVertex:
+		return "Vertex"
+	case PointAntiVertex:
+		return "AntiVertex"
+	case PointEastPoint:
+		return "EastPoint"
+	case PointLotFortune:
+		return "LotFortune"
+	case PointLotSpirit:
+		return "LotSpirit"
+	}
+	return id
+}
+
+// ChartTypeShort returns the short code for a ChartType (e.g. "Tr", "Na", "Sp", "Sa")
+func ChartTypeShort(ct ChartType) string {
+	switch ct {
+	case ChartTransit:
+		return "Tr"
+	case ChartNatal:
+		return "Na"
+	case ChartProgressions:
+		return "Sp"
+	case ChartSolarArc:
+		return "Sa"
+	default:
+		return string(ct)
+	}
+}
+
+// EventTypeCSV returns the CSV event type string
+func EventTypeCSV(et EventType, stationType StationType) string {
+	switch et {
+	case EventAspectBegin:
+		return "Begin"
+	case EventAspectEnter:
+		return "Enter"
+	case EventAspectExact:
+		return "Exact"
+	case EventAspectLeave:
+		return "Leave"
+	case EventSignIngress:
+		return "SignIngress"
+	case EventStation:
+		if stationType == StationDirect {
+			return "Direct"
+		}
+		return "Retrograde"
+	case EventVoidOfCourse:
+		return "Void"
+	case EventHouseIngress:
+		return "HouseIngress"
+	default:
+		return string(et)
+	}
+}
+
+// FormatSignDegreeCSV formats a sign degree for CSV output.
+// Truncates to arcminute precision, then rounds to 3 decimal places.
+func FormatSignDegreeCSV(signDeg float64) float64 {
+	d := int(signDeg)
+	m := int((signDeg - float64(d)) * 60.0)
+	return math.Round((float64(d)+float64(m)/60.0)*1000) / 1000
 }

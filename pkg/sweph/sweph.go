@@ -27,6 +27,7 @@ import "C"
 import (
 	"fmt"
 	"math"
+	"path/filepath"
 	"sync"
 	"unsafe"
 )
@@ -90,13 +91,25 @@ type HouseResult struct {
 
 var mu sync.Mutex
 
-// Init sets the ephemeris path
+// storedPath holds an absolute ephemeris path to prevent dangling pointer issues
+var storedPath *C.char
+
+// Init sets the ephemeris path. Converts to absolute path for reliability.
 func Init(ephePath string) {
 	mu.Lock()
 	defer mu.Unlock()
-	cpath := C.CString(ephePath)
-	defer C.free(unsafe.Pointer(cpath))
-	C.swe_set_ephe_path(cpath)
+	// Convert to absolute path to survive working directory changes
+	absPath, err := filepath.Abs(ephePath)
+	if err != nil {
+		absPath = ephePath
+	}
+	// Free previous stored path if any
+	if storedPath != nil {
+		C.free(unsafe.Pointer(storedPath))
+	}
+	// Keep the C string alive for the lifetime of the program
+	storedPath = C.CString(absPath)
+	C.swe_set_ephe_path(storedPath)
 }
 
 // Close releases Swiss Ephemeris resources

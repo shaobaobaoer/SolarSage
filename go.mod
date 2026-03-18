@@ -1,3 +1,17 @@
 module github.com/anthropic/swisseph-mcp
 
-go 1.22.2
+go 1.25
+
+require github.com/ringsaturn/tzf v1.0.4
+
+require (
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/paulmach/orb v0.12.0 // indirect
+	github.com/ringsaturn/tzf-rel-lite v0.0.2026-a // indirect
+	github.com/tidwall/geoindex v1.7.0 // indirect
+	github.com/tidwall/geojson v1.4.6 // indirect
+	github.com/tidwall/rtree v1.10.0 // indirect
+	github.com/twpayne/go-polyline v1.1.1 // indirect
+	go.mongodb.org/mongo-driver v1.11.4 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
+)

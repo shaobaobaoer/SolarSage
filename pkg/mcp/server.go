@@ -8,9 +8,11 @@ import (
 	"path/filepath"
 
 	"github.com/anthropic/swisseph-mcp/pkg/chart"
+	"github.com/anthropic/swisseph-mcp/pkg/export"
 	"github.com/anthropic/swisseph-mcp/pkg/geo"
 	"github.com/anthropic/swisseph-mcp/pkg/julian"
 	"github.com/anthropic/swisseph-mcp/pkg/models"
+	"github.com/anthropic/swisseph-mcp/pkg/progressions"
 	"github.com/anthropic/swisseph-mcp/pkg/sweph"
 	"github.com/anthropic/swisseph-mcp/pkg/transit"
 )
@@ -156,22 +158,22 @@ func (s *Server) handleToolsList(req *jsonRPCRequest) *jsonRPCResponse {
 	tools := []toolDef{
 		{
 			Name:        "geocode",
-			Description: "根据地点名称返回地理坐标（经纬度）和时区",
+			Description: "Returns geographic coordinates (lat/lon) and timezone for a location name",
 			InputSchema: json.RawMessage(`{
 				"type": "object",
 				"properties": {
-					"location_name": {"type": "string", "description": "地点名称，支持中英文"}
+					"location_name": {"type": "string", "description": "Location name"}
 				},
 				"required": ["location_name"]
 			}`),
 		},
 		{
 			Name:        "datetime_to_jd",
-			Description: "将公历日期时间（ISO 8601）转换为儒略日（UT 和 TT）",
+			Description: "Converts ISO 8601 datetime to Julian Day (UT and TT)",
 			InputSchema: json.RawMessage(`{
 				"type": "object",
 				"properties": {
-					"datetime": {"type": "string", "description": "ISO 8601 格式日期时间"},
+					"datetime": {"type": "string", "description": "ISO 8601 datetime string"},
 					"calendar": {"type": "string", "enum": ["GREGORIAN", "JULIAN"], "default": "GREGORIAN"}
 				},
 				"required": ["datetime"]
@@ -179,19 +181,31 @@ func (s *Server) handleToolsList(req *jsonRPCRequest) *jsonRPCResponse {
 		},
 		{
 			Name:        "jd_to_datetime",
-			Description: "将儒略日转换为公历日期时间（ISO 8601）",
+			Description: "Converts Julian Day to ISO 8601 datetime string",
 			InputSchema: json.RawMessage(`{
 				"type": "object",
 				"properties": {
-					"jd": {"type": "number", "description": "儒略日"},
-					"timezone": {"type": "string", "default": "UTC", "description": "目标时区"}
+					"jd": {"type": "number", "description": "Julian Day number"},
+					"timezone": {"type": "string", "default": "UTC", "description": "Target timezone"}
 				},
 				"required": ["jd"]
 			}`),
 		},
 		{
+			Name:        "calc_planet_position",
+			Description: "Calculate a single planet's ecliptic longitude, latitude, speed, retrograde status and sign",
+			InputSchema: json.RawMessage(`{
+				"type": "object",
+				"properties": {
+					"planet": {"type": "string", "description": "Planet ID: SUN, MOON, MERCURY, VENUS, MARS, JUPITER, SATURN, URANUS, NEPTUNE, PLUTO, CHIRON, NORTH_NODE_TRUE, etc."},
+					"jd_ut": {"type": "number", "description": "Julian Day (UT)"}
+				},
+				"required": ["planet", "jd_ut"]
+			}`),
+		},
+		{
 			Name:        "calc_single_chart",
-			Description: "单盘计算：在固定时间点计算天体位置、宫位和相位",
+			Description: "Single chart calculation: compute planet positions, houses, and aspects at a fixed time",
 			InputSchema: json.RawMessage(`{
 				"type": "object",
 				"properties": {
@@ -207,7 +221,7 @@ func (s *Server) handleToolsList(req *jsonRPCRequest) *jsonRPCResponse {
 		},
 		{
 			Name:        "calc_double_chart",
-			Description: "双盘计算：计算内外盘各自天体位置及跨盘相位",
+			Description: "Double chart calculation: compute inner/outer chart positions and cross-aspects",
 			InputSchema: json.RawMessage(`{
 				"type": "object",
 				"properties": {
@@ -228,8 +242,34 @@ func (s *Server) handleToolsList(req *jsonRPCRequest) *jsonRPCResponse {
 			}`),
 		},
 		{
+			Name:        "calc_progressions",
+			Description: "Secondary progressions: compute progressed planet positions (1 day = 1 year)",
+			InputSchema: json.RawMessage(`{
+				"type": "object",
+				"properties": {
+					"natal_jd_ut": {"type": "number", "description": "Natal Julian Day (UT)"},
+					"transit_jd_ut": {"type": "number", "description": "Transit Julian Day (UT)"},
+					"planets": {"type": "array", "items": {"type": "string"}, "description": "Planet list"}
+				},
+				"required": ["natal_jd_ut", "transit_jd_ut"]
+			}`),
+		},
+		{
+			Name:        "calc_solar_arc",
+			Description: "Solar arc directions: compute solar arc directed planet positions",
+			InputSchema: json.RawMessage(`{
+				"type": "object",
+				"properties": {
+					"natal_jd_ut": {"type": "number", "description": "Natal Julian Day (UT)"},
+					"transit_jd_ut": {"type": "number", "description": "Transit Julian Day (UT)"},
+					"planets": {"type": "array", "items": {"type": "string"}, "description": "Planet list"}
+				},
+				"required": ["natal_jd_ut", "transit_jd_ut"]
+			}`),
+		},
+		{
 			Name:        "calc_transit",
-			Description: "推运计算：在时间范围内搜索行运天体与本命天体之间所有占星事件",
+			Description: "Transit calculation: search for all astrological events between transit/progressed/solar-arc and natal bodies over a time range. Supports Tr-Na/Tr-Tr/Tr-Sp/Tr-Sa/Sp-Na/Sp-Sp/Sa-Na, sign/house ingress, stations, void of course.",
 			InputSchema: json.RawMessage(`{
 				"type": "object",
 				"properties": {
@@ -242,10 +282,22 @@ func (s *Server) handleToolsList(req *jsonRPCRequest) *jsonRPCResponse {
 					"start_jd_ut": {"type": "number"},
 					"end_jd_ut": {"type": "number"},
 					"transit_planets": {"type": "array", "items": {"type": "string"}},
+					"progressions_config": {"type": "object", "properties": {
+						"enabled": {"type": "boolean"},
+						"planets": {"type": "array", "items": {"type": "string"}}
+					}},
+					"solar_arc_config": {"type": "object", "properties": {
+						"enabled": {"type": "boolean"},
+						"planets": {"type": "array", "items": {"type": "string"}}
+					}},
 					"special_points": {"type": "object"},
 					"event_config": {"type": "object"},
 					"house_system": {"type": "string", "default": "PLACIDUS"},
-					"orb_config": {"type": "object"}
+					"orb_config_transit": {"type": "object"},
+					"orb_config_progressions": {"type": "object"},
+					"orb_config_solar_arc": {"type": "object"},
+					"format": {"type": "string", "enum": ["json", "csv"], "description": "Output format: json (default) or csv (Solar Fire compatible)"},
+					"timezone": {"type": "string", "default": "UTC", "description": "Timezone for CSV date/time output"}
 				},
 				"required": ["natal_latitude", "natal_longitude", "natal_jd_ut",
 					"transit_latitude", "transit_longitude", "start_jd_ut", "end_jd_ut"]
@@ -276,10 +328,16 @@ func (s *Server) handleToolsCall(req *jsonRPCRequest) *jsonRPCResponse {
 		result, err = s.handleDatetimeToJD(params.Arguments)
 	case "jd_to_datetime":
 		result, err = s.handleJDToDatetime(params.Arguments)
+	case "calc_planet_position":
+		result, err = s.handleCalcPlanetPosition(params.Arguments)
 	case "calc_single_chart":
 		result, err = s.handleCalcSingleChart(params.Arguments)
 	case "calc_double_chart":
 		result, err = s.handleCalcDoubleChart(params.Arguments)
+	case "calc_progressions":
+		result, err = s.handleCalcProgressions(params.Arguments)
+	case "calc_solar_arc":
+		result, err = s.handleCalcSolarArc(params.Arguments)
 	case "calc_transit":
 		result, err = s.handleCalcTransit(params.Arguments)
 	default:
@@ -316,6 +374,30 @@ func errorResponse(id interface{}, code int, msg string) *jsonRPCResponse {
 }
 
 // === Tool handlers ===
+
+func (s *Server) handleCalcPlanetPosition(args json.RawMessage) (interface{}, error) {
+	var input struct {
+		Planet models.PlanetID `json:"planet"`
+		JDUT   float64         `json:"jd_ut"`
+	}
+	if err := json.Unmarshal(args, &input); err != nil {
+		return nil, err
+	}
+
+	lon, speed, err := chart.CalcPlanetLongitude(input.Planet, input.JDUT)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"planet":       input.Planet,
+		"longitude":    lon,
+		"speed":        speed,
+		"is_retrograde": speed < 0,
+		"sign":         models.SignFromLongitude(lon),
+		"sign_degree":  models.SignDegreeFromLongitude(lon),
+	}, nil
+}
 
 func (s *Server) handleGeocode(args json.RawMessage) (interface{}, error) {
 	var input struct {
@@ -446,23 +528,171 @@ func (s *Server) handleCalcDoubleChart(args json.RawMessage) (interface{}, error
 }
 
 func (s *Server) handleCalcTransit(args json.RawMessage) (interface{}, error) {
+	calcInput, tz, err := s.buildTransitInput(args)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check format parameter
+	var formatInput struct {
+		Format string `json:"format"`
+	}
+	json.Unmarshal(args, &formatInput)
+
+	events, err := transit.CalcTransitEvents(calcInput)
+	if err != nil {
+		return nil, err
+	}
+
+	switch formatInput.Format {
+	case "csv":
+		csv := export.EventsToCSV(events, tz, "")
+		return map[string]interface{}{
+			"format":      "csv",
+			"event_count": len(events),
+			"csv":         csv,
+		}, nil
+	default:
+		return map[string]interface{}{
+			"events": events,
+		}, nil
+	}
+}
+
+func (s *Server) handleCalcProgressions(args json.RawMessage) (interface{}, error) {
 	var input struct {
-		NatalLatitude  float64                     `json:"natal_latitude"`
-		NatalLongitude float64                     `json:"natal_longitude"`
-		NatalJDUT      float64                     `json:"natal_jd_ut"`
-		NatalPlanets   []models.PlanetID           `json:"natal_planets"`
-		TransitLatitude  float64                   `json:"transit_latitude"`
-		TransitLongitude float64                   `json:"transit_longitude"`
-		StartJDUT      float64                     `json:"start_jd_ut"`
-		EndJDUT        float64                     `json:"end_jd_ut"`
-		TransitPlanets []models.PlanetID           `json:"transit_planets"`
-		SpecialPoints  *models.SpecialPointsConfig `json:"special_points"`
-		EventConfig    *models.EventConfig         `json:"event_config"`
-		HouseSystem    models.HouseSystem          `json:"house_system"`
-		OrbConfig      *models.OrbConfig           `json:"orb_config"`
+		NatalJDUT   float64           `json:"natal_jd_ut"`
+		TransitJDUT float64           `json:"transit_jd_ut"`
+		Planets     []models.PlanetID `json:"planets"`
 	}
 	if err := json.Unmarshal(args, &input); err != nil {
 		return nil, err
+	}
+
+	if len(input.Planets) == 0 {
+		input.Planets = []models.PlanetID{
+			models.PlanetSun, models.PlanetMoon, models.PlanetMercury,
+			models.PlanetVenus, models.PlanetMars, models.PlanetJupiter,
+			models.PlanetSaturn, models.PlanetUranus, models.PlanetNeptune,
+			models.PlanetPluto,
+		}
+	}
+
+	age := progressions.Age(input.NatalJDUT, input.TransitJDUT)
+	progressedJD := progressions.SecondaryProgressionJD(input.NatalJDUT, input.TransitJDUT)
+
+	type progressedPlanet struct {
+		PlanetID     models.PlanetID `json:"planet_id"`
+		Longitude    float64         `json:"longitude"`
+		Speed        float64         `json:"speed"`
+		IsRetrograde bool            `json:"is_retrograde"`
+		Sign         string          `json:"sign"`
+		SignDegree   float64         `json:"sign_degree"`
+	}
+
+	var planets []progressedPlanet
+	for _, pid := range input.Planets {
+		lon, speed, err := progressions.CalcProgressedLongitude(pid, input.NatalJDUT, input.TransitJDUT)
+		if err != nil {
+			continue
+		}
+		planets = append(planets, progressedPlanet{
+			PlanetID:     pid,
+			Longitude:    lon,
+			Speed:        speed,
+			IsRetrograde: speed < 0,
+			Sign:         models.SignFromLongitude(lon),
+			SignDegree:   models.SignDegreeFromLongitude(lon),
+		})
+	}
+
+	return map[string]interface{}{
+		"age":           age,
+		"progressed_jd": progressedJD,
+		"planets":       planets,
+	}, nil
+}
+
+func (s *Server) handleCalcSolarArc(args json.RawMessage) (interface{}, error) {
+	var input struct {
+		NatalJDUT   float64           `json:"natal_jd_ut"`
+		TransitJDUT float64           `json:"transit_jd_ut"`
+		Planets     []models.PlanetID `json:"planets"`
+	}
+	if err := json.Unmarshal(args, &input); err != nil {
+		return nil, err
+	}
+
+	if len(input.Planets) == 0 {
+		input.Planets = []models.PlanetID{
+			models.PlanetSun, models.PlanetMoon, models.PlanetMercury,
+			models.PlanetVenus, models.PlanetMars, models.PlanetJupiter,
+			models.PlanetSaturn, models.PlanetUranus, models.PlanetNeptune,
+			models.PlanetPluto,
+		}
+	}
+
+	age := progressions.Age(input.NatalJDUT, input.TransitJDUT)
+	offset, err := progressions.SolarArcOffset(input.NatalJDUT, input.TransitJDUT)
+	if err != nil {
+		return nil, err
+	}
+
+	type solarArcPlanet struct {
+		PlanetID   models.PlanetID `json:"planet_id"`
+		Longitude  float64         `json:"longitude"`
+		Speed      float64         `json:"speed"`
+		Sign       string          `json:"sign"`
+		SignDegree float64         `json:"sign_degree"`
+	}
+
+	var planets []solarArcPlanet
+	for _, pid := range input.Planets {
+		lon, speed, err := progressions.CalcSolarArcLongitude(pid, input.NatalJDUT, input.TransitJDUT)
+		if err != nil {
+			continue
+		}
+		planets = append(planets, solarArcPlanet{
+			PlanetID:   pid,
+			Longitude:  lon,
+			Speed:      speed,
+			Sign:       models.SignFromLongitude(lon),
+			SignDegree: models.SignDegreeFromLongitude(lon),
+		})
+	}
+
+	return map[string]interface{}{
+		"age":              age,
+		"solar_arc_offset": offset,
+		"planets":          planets,
+	}, nil
+}
+
+// buildTransitInput extracts common transit input from JSON arguments
+func (s *Server) buildTransitInput(args json.RawMessage) (transit.TransitCalcInput, string, error) {
+	var input struct {
+		NatalLatitude      float64                      `json:"natal_latitude"`
+		NatalLongitude     float64                      `json:"natal_longitude"`
+		NatalJDUT          float64                      `json:"natal_jd_ut"`
+		NatalPlanets       []models.PlanetID            `json:"natal_planets"`
+		TransitLatitude    float64                      `json:"transit_latitude"`
+		TransitLongitude   float64                      `json:"transit_longitude"`
+		StartJDUT          float64                      `json:"start_jd_ut"`
+		EndJDUT            float64                      `json:"end_jd_ut"`
+		TransitPlanets     []models.PlanetID            `json:"transit_planets"`
+		ProgressionsConfig *models.ProgressionsConfig   `json:"progressions_config"`
+		SolarArcConfig     *models.SolarArcConfig       `json:"solar_arc_config"`
+		SpecialPoints      *models.SpecialPointsConfig  `json:"special_points"`
+		EventConfig        *models.EventConfig          `json:"event_config"`
+		HouseSystem        models.HouseSystem           `json:"house_system"`
+		OrbConfig             *models.OrbConfig         `json:"orb_config"`
+		OrbConfigTransit      *models.OrbConfig         `json:"orb_config_transit"`
+		OrbConfigProgressions *models.OrbConfig         `json:"orb_config_progressions"`
+		OrbConfigSolarArc     *models.OrbConfig         `json:"orb_config_solar_arc"`
+		Timezone              string                    `json:"timezone"`
+	}
+	if err := json.Unmarshal(args, &input); err != nil {
+		return transit.TransitCalcInput{}, "", err
 	}
 
 	defaultPlanets := []models.PlanetID{
@@ -480,35 +710,48 @@ func (s *Server) handleCalcTransit(args json.RawMessage) (interface{}, error) {
 	if input.HouseSystem == "" {
 		input.HouseSystem = models.HousePlacidus
 	}
-	orbs := models.DefaultOrbConfig()
+	if input.Timezone == "" {
+		input.Timezone = "UTC"
+	}
+	baseOrbs := models.DefaultOrbConfig()
 	if input.OrbConfig != nil {
-		orbs = *input.OrbConfig
+		baseOrbs = *input.OrbConfig
+	}
+	orbsTransit := baseOrbs
+	if input.OrbConfigTransit != nil {
+		orbsTransit = *input.OrbConfigTransit
+	}
+	orbsProgressions := baseOrbs
+	if input.OrbConfigProgressions != nil {
+		orbsProgressions = *input.OrbConfigProgressions
+	}
+	orbsSolarArc := baseOrbs
+	if input.OrbConfigSolarArc != nil {
+		orbsSolarArc = *input.OrbConfigSolarArc
 	}
 	eventCfg := models.DefaultEventConfig()
 	if input.EventConfig != nil {
 		eventCfg = *input.EventConfig
 	}
 
-	events, err := transit.CalcTransitEvents(transit.TransitCalcInput{
-		NatalLat:       input.NatalLatitude,
-		NatalLon:       input.NatalLongitude,
-		NatalJD:        input.NatalJDUT,
-		NatalPlanets:   input.NatalPlanets,
-		TransitLat:     input.TransitLatitude,
-		TransitLon:     input.TransitLongitude,
-		StartJD:        input.StartJDUT,
-		EndJD:          input.EndJDUT,
-		TransitPlanets: input.TransitPlanets,
-		SpecialPoints:  input.SpecialPoints,
-		EventConfig:    eventCfg,
-		OrbConfig:      orbs,
-		HouseSystem:    input.HouseSystem,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]interface{}{
-		"events": events,
-	}, nil
+	return transit.TransitCalcInput{
+		NatalLat:              input.NatalLatitude,
+		NatalLon:              input.NatalLongitude,
+		NatalJD:               input.NatalJDUT,
+		NatalPlanets:          input.NatalPlanets,
+		TransitLat:            input.TransitLatitude,
+		TransitLon:            input.TransitLongitude,
+		StartJD:               input.StartJDUT,
+		EndJD:                 input.EndJDUT,
+		TransitPlanets:        input.TransitPlanets,
+		ProgressionsConfig:    input.ProgressionsConfig,
+		SolarArcConfig:        input.SolarArcConfig,
+		SpecialPoints:         input.SpecialPoints,
+		EventConfig:           eventCfg,
+		OrbConfigTransit:      orbsTransit,
+		OrbConfigProgressions: orbsProgressions,
+		OrbConfigSolarArc:     orbsSolarArc,
+		HouseSystem:           input.HouseSystem,
+	}, input.Timezone, nil
 }
+

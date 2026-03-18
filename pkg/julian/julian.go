@@ -2,6 +2,7 @@ package julian
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/anthropic/swisseph-mcp/pkg/models"
@@ -42,12 +43,13 @@ func JDToDateTime(jd float64, timezone string) (string, error) {
 
 	year, month, day, hour := sweph.RevJul(jd, true)
 
-	hours := int(hour)
-	minutesFrac := (hour - float64(hours)) * 60.0
-	minutes := int(minutesFrac)
-	secondsFrac := (minutesFrac - float64(minutes)) * 60.0
-	seconds := int(secondsFrac)
-	nanos := int((secondsFrac - float64(seconds)) * 1e9)
+	// Round to nearest second to avoid float64 precision loss
+	totalSeconds := math.Round(hour * 3600.0)
+	hours := int(totalSeconds / 3600.0)
+	totalSeconds -= float64(hours) * 3600.0
+	minutes := int(totalSeconds / 60.0)
+	seconds := int(totalSeconds - float64(minutes)*60.0)
+	nanos := 0
 
 	t := time.Date(year, time.Month(month), day, hours, minutes, seconds, nanos, time.UTC)
 	t = t.In(loc)
