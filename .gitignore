@@ -1,5 +1,21 @@
 # Build output
 bin/
 
-# Third-party dependencies
+# Third-party dependencies (large ephemeris files)
 third_party/
+
+# Test coverage
+coverage.out
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude project files
+.claude/

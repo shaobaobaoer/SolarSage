@@ -2,44 +2,48 @@ package models
 
 import "github.com/anthropic/swisseph-mcp/pkg/sweph"
 
+// planetSweIDMap is the pre-built mapping from PlanetID to Swiss Ephemeris planet number
+var planetSweIDMap = map[PlanetID]int{
+	PlanetSun:           sweph.SE_SUN,
+	PlanetMoon:          sweph.SE_MOON,
+	PlanetMercury:       sweph.SE_MERCURY,
+	PlanetVenus:         sweph.SE_VENUS,
+	PlanetMars:          sweph.SE_MARS,
+	PlanetJupiter:       sweph.SE_JUPITER,
+	PlanetSaturn:        sweph.SE_SATURN,
+	PlanetUranus:        sweph.SE_URANUS,
+	PlanetNeptune:       sweph.SE_NEPTUNE,
+	PlanetPluto:         sweph.SE_PLUTO,
+	PlanetChiron:        sweph.SE_CHIRON,
+	PlanetNorthNodeTrue: sweph.SE_TRUE_NODE,
+	PlanetNorthNodeMean: sweph.SE_MEAN_NODE,
+	PlanetLilithMean:    sweph.SE_MEAN_APOG,
+	PlanetLilithTrue:    sweph.SE_OSCU_APOG,
+}
+
 // PlanetToSweID maps PlanetID to Swiss Ephemeris planet number
 func PlanetToSweID(p PlanetID) (int, bool) {
-	m := map[PlanetID]int{
-		PlanetSun:           sweph.SE_SUN,
-		PlanetMoon:          sweph.SE_MOON,
-		PlanetMercury:       sweph.SE_MERCURY,
-		PlanetVenus:         sweph.SE_VENUS,
-		PlanetMars:          sweph.SE_MARS,
-		PlanetJupiter:       sweph.SE_JUPITER,
-		PlanetSaturn:        sweph.SE_SATURN,
-		PlanetUranus:        sweph.SE_URANUS,
-		PlanetNeptune:       sweph.SE_NEPTUNE,
-		PlanetPluto:         sweph.SE_PLUTO,
-		PlanetChiron:        sweph.SE_CHIRON,
-		PlanetNorthNodeTrue: sweph.SE_TRUE_NODE,
-		PlanetNorthNodeMean: sweph.SE_MEAN_NODE,
-		PlanetLilithMean:    sweph.SE_MEAN_APOG,
-		PlanetLilithTrue:    sweph.SE_OSCU_APOG,
-	}
-	id, ok := m[p]
+	id, ok := planetSweIDMap[p]
 	return id, ok
+}
+
+// houseSystemCharMap is the pre-built mapping from HouseSystem to Swiss Ephemeris char code
+var houseSystemCharMap = map[HouseSystem]int{
+	HousePlacidus:      sweph.HousePlacidus,
+	HouseKoch:          sweph.HouseKoch,
+	HouseEqual:         sweph.HouseEqual,
+	HouseWholeSign:     sweph.HouseWholeSign,
+	HouseCampanus:      sweph.HouseCampanus,
+	HouseRegiomontanus: sweph.HouseRegiomontanus,
+	HousePorphyry:      sweph.HousePorphyry,
 }
 
 // HouseSystemToChar maps HouseSystem to Swiss Ephemeris char code
 func HouseSystemToChar(hs HouseSystem) int {
-	m := map[HouseSystem]int{
-		HousePlacidus:      sweph.HousePlacidus,
-		HouseKoch:          sweph.HouseKoch,
-		HouseEqual:         sweph.HouseEqual,
-		HouseWholeSign:     sweph.HouseWholeSign,
-		HouseCampanus:      sweph.HouseCampanus,
-		HouseRegiomontanus: sweph.HouseRegiomontanus,
-		HousePorphyry:      sweph.HousePorphyry,
-	}
-	if c, ok := m[hs]; ok {
+	if c, ok := houseSystemCharMap[hs]; ok {
 		return c
 	}
-	return sweph.HousePlacidus // default
+	return sweph.HousePlacidus
 }
 
 // AllPlanets returns all standard planets
