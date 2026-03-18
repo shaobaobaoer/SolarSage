@@ -755,20 +755,30 @@ func TestIntersectIntervals_NoOverlap(t *testing.T) {
 }
 
 func TestAdaptiveStep(t *testing.T) {
-	// Fast movers
-	step := adaptiveStep(1.0, 0.5)
-	if step != fineStep {
-		t.Errorf("Fast movers step = %f, want %f", step, fineStep)
+	// Fast movers (Moon ~13 deg/day, 1 deg orb): step = 1/(13+0)/4 = 0.019, clamped to 0.1
+	step := adaptiveStep(13.0, 0.0, 1.0)
+	if step != 0.1 {
+		t.Errorf("Fast mover step = %f, want 0.1", step)
 	}
-	// Slow movers (progressions)
-	step = adaptiveStep(0.05, 0.0)
-	if step != 2.0 {
-		t.Errorf("Slow movers step = %f, want 2.0", step)
+	// Medium movers (Sun ~1 deg/day): step = 1/1/4 = 0.25
+	step = adaptiveStep(1.0, 0.0, 1.0)
+	if step < 0.1 || step > 0.5 {
+		t.Errorf("Medium mover step = %f, want 0.1-0.5", step)
 	}
-	// Very slow movers (solar arc)
-	step = adaptiveStep(0.003, 0.0)
-	if step != 7.0 {
-		t.Errorf("Very slow movers step = %f, want 7.0", step)
+	// Slow movers (Jupiter ~0.08 + SA ~0.003): step = 1/0.083/4 = 3.0
+	step = adaptiveStep(0.08, 0.003, 1.0)
+	if step < 1.0 || step > 5.0 {
+		t.Errorf("Slow mover step = %f, want 1.0-5.0", step)
+	}
+	// Ultra slow (near station, both ~0): step = 1.0 (fallback)
+	step = adaptiveStep(0.0005, 0.0003, 1.0)
+	if step != 1.0 {
+		t.Errorf("Ultra slow step = %f, want 1.0", step)
+	}
+	// Large orb makes larger step
+	step = adaptiveStep(1.0, 0.0, 8.0)
+	if step < 1.0 {
+		t.Errorf("Large orb step = %f, want >= 1.0", step)
 	}
 }
 

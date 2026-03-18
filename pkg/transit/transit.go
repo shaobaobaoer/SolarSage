@@ -11,28 +11,41 @@ import (
 )
 
 const (
-	dayStep   = 1.0         // 1 day coarse scan step
+	dayStep   = 1.0         // 1 day step for station scanning
 	bisectEps = 1.0 / 86400 // ~1 second precision
-	fineStep  = 0.5         // fine scan step for fast movers (transit planets)
 )
 
-// adaptiveStep returns an appropriate scan step based on body speeds.
-// For fast movers (transit planets): 0.5 day
-// For slow movers (progressions, solar arc): up to 7 days
-func adaptiveStep(speed1, speed2 float64) float64 {
-	maxSpeed := math.Abs(speed1)
-	if math.Abs(speed2) > maxSpeed {
-		maxSpeed = math.Abs(speed2)
+// adaptiveStep returns an appropriate scan step based on body speeds and orb.
+// The step must be small enough to detect sign changes in the angular difference.
+//
+// Planet speed reference (degrees/day):
+//   Moon ~13, Sun ~1, Mercury ~0.5-1.5, Venus ~0.8-1.2, Mars ~0.5-0.8
+//   Jupiter ~0.08, Saturn ~0.03, Uranus ~0.01, Neptune ~0.006, Pluto ~0.004
+//   Progressions ~0.003, Solar arc ~0.003
+//
+// For RQ1 (moving vs fixed): step based on moving body speed
+// For RQ2 (moving vs moving): step based on relative speed
+func adaptiveStep(speed1, speed2 float64, orb float64) float64 {
+	// Relative speed determines how fast the angular difference changes
+	relSpeed := math.Abs(speed1) + math.Abs(speed2)
+
+	// Ensure we get at least 4 samples per orb crossing
+	// step = orb / relSpeed / 4 (capped)
+	if relSpeed > 0.001 {
+		step := orb / relSpeed / 4.0
+		// Clamp to reasonable range
+		if step < 0.1 {
+			step = 0.1 // minimum 2.4 hours
+		}
+		if step > 5.0 {
+			step = 5.0 // maximum 5 days
+		}
+		return step
 	}
-	if maxSpeed < 0.01 {
-		// Very slow (solar arc): 7 days still gives <0.07° resolution
-		return 7.0
-	}
-	if maxSpeed < 0.1 {
-		// Slow (progressions): 2 days
-		return 2.0
-	}
-	return fineStep
+
+	// Ultra-slow: both bodies nearly stationary (near station)
+	// Use 1 day to catch any subtle motion
+	return 1.0
 }
 
 // StationInfo represents a retrograde/direct station
@@ -660,7 +673,7 @@ func findAspectEventsRQ1(
 			prevJD := interval.Start
 			prevLon, prevSpeed, _ := calcFn(prevJD)
 			prevDiff := angleDiffToAspect(prevLon, targetLon, asp.Angle)
-			step := adaptiveStep(prevSpeed, 0) // target is fixed (speed=0)
+			step := adaptiveStep(prevSpeed, 0, orb)
 
 			for jd := interval.Start + step; jd <= interval.End+step*0.5; jd += step {
 				if jd > interval.End {
@@ -859,17 +872,47 @@ func findAspectEventsRQ2(
 			lon2Start, speed2Start, _ := calcFn2(prevJD)
 			prevDiff := angleDiffToAspect(lon1Start, lon2Start, asp.Angle)
 
-			// Compute step per-interval based on actual speeds
-			step := adaptiveStep(speed1Start, speed2Start)
+			// Check if aspect is near-exact at sub-interval start (station boundary)
+			if inAspect && math.Abs(prevDiff) < 0.01 && prevJD > startJD+0.5 {
+				exactCount++
+				eRetro1 := getSpeed(calcFn1, prevJD) < 0
+				eRetro2 := speed2Start < 0
+				events = append(events, models.TransitEvent{
+					EventType:          models.EventAspectExact,
+					ChartType:          chartType1,
+					Planet:             planet1,
+					JD:                 prevJD,
+					Age:                progressions.Age(natalJD, prevJD),
+					PlanetLongitude:    lon1Start,
+					PlanetSign:         models.SignFromLongitude(lon1Start),
+					PlanetHouse:        chart.FindHouseForLongitude(lon1Start, natalHouses),
+					IsRetrograde:       eRetro1,
+					TargetChartType:    chartType2,
+					Target:             string(planet2),
+					TargetLongitude:    lon2Start,
+					TargetSign:         models.SignFromLongitude(lon2Start),
+					TargetHouse:        chart.FindHouseForLongitude(lon2Start, natalHouses),
+					TargetIsRetrograde: eRetro2,
+					AspectType:         asp.Type,
+					AspectAngle:        asp.Angle,
+					ExactCount:         exactCount,
+				})
+			}
+
+			// Compute initial step based on actual speeds
+			step := adaptiveStep(speed1Start, speed2Start, orb)
 
 		for jd := interval.Start + step; jd <= interval.End+step*0.5; jd += step {
 			if jd > interval.End {
 				jd = interval.End
 			}
 
-			lon1, _, _ := calcFn1(jd)
-			lon2, _, _ := calcFn2(jd)
+			lon1, speed1Cur, _ := calcFn1(jd)
+			lon2, speed2Cur, _ := calcFn2(jd)
 			curDiff := angleDiffToAspect(lon1, lon2, asp.Angle)
+
+			// Dynamically adjust step based on current speeds
+			step = adaptiveStep(speed1Cur, speed2Cur, orb)
 
 			// ENTER
 			if !inAspect && math.Abs(curDiff) <= orb && math.Abs(prevDiff) > orb {
@@ -901,8 +944,10 @@ func findAspectEventsRQ2(
 				inAspect = true
 			}
 
-			// EXACT: sign change AND both diffs within reasonable range
-			if prevDiff*curDiff < 0 && math.Abs(prevDiff) < 90 && math.Abs(curDiff) < 90 {
+			// EXACT: sign change (or near-zero at interval boundary) AND both diffs reasonable
+			isSignChange := prevDiff*curDiff < 0 && math.Abs(prevDiff) < 90 && math.Abs(curDiff) < 90
+			isNearZero := math.Abs(curDiff) < 0.001 && math.Abs(prevDiff) > 0.0001 && math.Abs(prevDiff) < 90
+			if isSignChange || isNearZero {
 				exactJD := bisectExactRQ2(calcFn1, calcFn2, asp.Angle, prevJD, jd)
 				exactCount++
 				eLon1, _, _ := calcFn1(exactJD)
@@ -987,7 +1032,7 @@ func findSignIngressEvents(calcFn bodyCalcFunc, planet models.PlanetID, chartTyp
 		prevLon, prevSpeed, _ := calcFn(prevJD)
 		prevSign := int(prevLon / 30.0)
 
-		step := adaptiveStep(prevSpeed, 0)
+		step := adaptiveStep(prevSpeed, 0, 30.0)
 		for jd := interval.Start + step; jd <= interval.End+step*0.5; jd += step {
 			if jd > interval.End {
 				jd = interval.End
@@ -1041,7 +1086,7 @@ func findHouseIngressEvents(calcFn bodyCalcFunc, planet models.PlanetID, chartTy
 		prevLon, prevSpeed, _ := calcFn(prevJD)
 		prevHouse := chart.FindHouseForLongitude(prevLon, natalHouses)
 
-		step := adaptiveStep(prevSpeed, 0)
+		step := adaptiveStep(prevSpeed, 0, 30.0)
 		for jd := interval.Start + step; jd <= interval.End+step*0.5; jd += step {
 			if jd > interval.End {
 				jd = interval.End
