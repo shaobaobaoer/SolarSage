@@ -40,6 +40,7 @@ var houseSystemCharMap = map[HouseSystem]int{
 	HouseTopocentric:   sweph.HouseTopocentric,
 	HouseAlcabitius:    sweph.HouseAlcabitius,
 	HouseMeridian:      sweph.HouseMeridian,
+	HouseSripati:       sweph.HouseSripati,
 }
 
 // HouseSystemToChar maps HouseSystem to Swiss Ephemeris char code

@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"math"
+	"strings"
 )
 
 // PlanetID represents a celestial body identifier
@@ -57,6 +58,7 @@ const (
 	HouseTopocentric   HouseSystem = "TOPOCENTRIC"
 	HouseAlcabitius    HouseSystem = "ALCABITIUS"
 	HouseMeridian      HouseSystem = "MERIDIAN"
+	HouseSripati       HouseSystem = "SRIPATI"
 )
 
 // CalendarType represents calendar type
@@ -119,22 +121,56 @@ var StandardAspects = []AspectDef{
 	{AspectSesquiquadrate, 135},
 }
 
-// OrbConfig holds the orb (tolerance) for each aspect type
-type OrbConfig struct {
-	Conjunction    float64 `json:"conjunction"`
-	Opposition     float64 `json:"opposition"`
-	Trine          float64 `json:"trine"`
-	Square         float64 `json:"square"`
-	Sextile        float64 `json:"sextile"`
-	Quincunx       float64 `json:"quincunx"`
-	SemiSextile    float64 `json:"semi_sextile"`
-	SemiSquare     float64 `json:"semi_square"`
-	Sesquiquadrate float64 `json:"sesquiquadrate"`
+// AspectOrbDef defines the orb configuration for a single aspect type.
+// This is the flexible, user-friendly format for API configuration.
+type AspectOrbDef struct {
+	Name        string  `json:"name"`         // Aspect name (e.g., "conjunction", "my_custom_aspect")
+	Angle       float64 `json:"angle"`        // Aspect angle in degrees (e.g., 0, 180, 120)
+	EnteringOrb float64 `json:"entering_orb"` // Orb for entering/applying aspects
+	ExitingOrb  float64 `json:"exiting_orb"`  // Orb for exiting/separating aspects
+	Enabled     bool    `json:"enabled"`      // Whether this aspect is enabled (default: true)
 }
 
-// DefaultOrbConfig returns default orb values
+// OrbConfig holds the orb configuration.
+// Can be specified either as:
+// 1. A list of AspectOrbDef (flexible format, recommended for APIs)
+// 2. Legacy flat fields (backward compatible)
+type OrbConfig struct {
+	// Definitions is a list of aspect definitions with entering/exiting orbs.
+	// When provided, this takes precedence over the legacy fields.
+	Definitions []AspectOrbDef `json:"definitions,omitempty"`
+
+	// Legacy fields for backward compatibility
+	Conjunction    float64 `json:"conjunction,omitempty"`
+	Opposition     float64 `json:"opposition,omitempty"`
+	Trine          float64 `json:"trine,omitempty"`
+	Square         float64 `json:"square,omitempty"`
+	Sextile        float64 `json:"sextile,omitempty"`
+	Quincunx       float64 `json:"quincunx,omitempty"`
+	SemiSextile    float64 `json:"semi_sextile,omitempty"`
+	SemiSquare     float64 `json:"semi_square,omitempty"`
+	Sesquiquadrate float64 `json:"sesquiquadrate,omitempty"`
+}
+
+// defaultAspectDefs defines the built-in default aspects
+// Names use hyphens to match AspectType constants (e.g., "Semi-Sextile")
+var defaultAspectDefs = []AspectOrbDef{
+	{Name: "conjunction", Angle: 0, EnteringOrb: 8, ExitingOrb: 8, Enabled: true},
+	{Name: "opposition", Angle: 180, EnteringOrb: 8, ExitingOrb: 8, Enabled: true},
+	{Name: "trine", Angle: 120, EnteringOrb: 7, ExitingOrb: 7, Enabled: true},
+	{Name: "square", Angle: 90, EnteringOrb: 7, ExitingOrb: 7, Enabled: true},
+	{Name: "sextile", Angle: 60, EnteringOrb: 5, ExitingOrb: 5, Enabled: true},
+	{Name: "quincunx", Angle: 150, EnteringOrb: 3, ExitingOrb: 3, Enabled: true},
+	{Name: "semi-sextile", Angle: 30, EnteringOrb: 2, ExitingOrb: 2, Enabled: true},
+	{Name: "semi-square", Angle: 45, EnteringOrb: 2, ExitingOrb: 2, Enabled: true},
+	{Name: "sesquiquadrate", Angle: 135, EnteringOrb: 2, ExitingOrb: 2, Enabled: true},
+}
+
+// DefaultOrbConfig returns default orb configuration
 func DefaultOrbConfig() OrbConfig {
 	return OrbConfig{
+		Definitions: defaultAspectDefs,
+		// Also populate legacy fields for backward compatibility
 		Conjunction:    8,
 		Opposition:     8,
 		Trine:          7,
@@ -147,30 +183,80 @@ func DefaultOrbConfig() OrbConfig {
 	}
 }
 
-// GetOrb returns the orb for a given aspect type
-func (o OrbConfig) GetOrb(at AspectType) float64 {
-	switch at {
-	case AspectConjunction:
-		return o.Conjunction
-	case AspectOpposition:
-		return o.Opposition
-	case AspectTrine:
-		return o.Trine
-	case AspectSquare:
-		return o.Square
-	case AspectSextile:
-		return o.Sextile
-	case AspectQuincunx:
-		return o.Quincunx
-	case AspectSemiSextile:
-		return o.SemiSextile
-	case AspectSemiSquare:
-		return o.SemiSquare
-	case AspectSesquiquadrate:
-		return o.Sesquiquadrate
-	default:
-		return 0
+// GetAspectDefs returns the effective aspect definitions.
+// If Definitions is provided, returns that; otherwise builds from legacy fields.
+func (o OrbConfig) GetAspectDefs() []AspectOrbDef {
+	if len(o.Definitions) > 0 {
+		return o.Definitions
 	}
+	// Build from legacy fields, using defaults if zero
+	// Names must match AspectType constants for backward compatibility
+	return []AspectOrbDef{
+		{Name: "conjunction", Angle: 0, EnteringOrb: defaultIfZero(o.Conjunction, 8), ExitingOrb: defaultIfZero(o.Conjunction, 8), Enabled: true},
+		{Name: "opposition", Angle: 180, EnteringOrb: defaultIfZero(o.Opposition, 8), ExitingOrb: defaultIfZero(o.Opposition, 8), Enabled: true},
+		{Name: "trine", Angle: 120, EnteringOrb: defaultIfZero(o.Trine, 7), ExitingOrb: defaultIfZero(o.Trine, 7), Enabled: true},
+		{Name: "square", Angle: 90, EnteringOrb: defaultIfZero(o.Square, 7), ExitingOrb: defaultIfZero(o.Square, 7), Enabled: true},
+		{Name: "sextile", Angle: 60, EnteringOrb: defaultIfZero(o.Sextile, 5), ExitingOrb: defaultIfZero(o.Sextile, 5), Enabled: true},
+		{Name: "quincunx", Angle: 150, EnteringOrb: defaultIfZero(o.Quincunx, 3), ExitingOrb: defaultIfZero(o.Quincunx, 3), Enabled: true},
+		{Name: "semi-sextile", Angle: 30, EnteringOrb: defaultIfZero(o.SemiSextile, 2), ExitingOrb: defaultIfZero(o.SemiSextile, 2), Enabled: true},
+		{Name: "semi-square", Angle: 45, EnteringOrb: defaultIfZero(o.SemiSquare, 2), ExitingOrb: defaultIfZero(o.SemiSquare, 2), Enabled: true},
+		{Name: "sesquiquadrate", Angle: 135, EnteringOrb: defaultIfZero(o.Sesquiquadrate, 2), ExitingOrb: defaultIfZero(o.Sesquiquadrate, 2), Enabled: true},
+	}
+}
+
+// defaultIfZero returns val if non-zero, otherwise returns def
+func defaultIfZero(val, def float64) float64 {
+	if val == 0 {
+		return def
+	}
+	return val
+}
+
+// GetOrbForAspect returns the appropriate orb for an aspect based on entering/exiting state.
+// Looks up by aspect angle (with tolerance for matching).
+func (o OrbConfig) GetOrbForAspect(angle float64, isEntering bool) float64 {
+	defs := o.GetAspectDefs()
+	for _, def := range defs {
+		if !def.Enabled {
+			continue
+		}
+		// Match by angle (within 1 degree tolerance)
+		if math.Abs(def.Angle-angle) < 1.0 {
+			if isEntering {
+				return def.EnteringOrb
+			}
+			return def.ExitingOrb
+		}
+	}
+	return 0
+}
+
+// GetOrb returns the orb for a given aspect type (backward compatible).
+func (o OrbConfig) GetOrb(at AspectType) float64 {
+	defs := o.GetAspectDefs()
+	atLower := strings.ToLower(string(at))
+	for _, def := range defs {
+		if strings.ToLower(def.Name) == atLower && def.Enabled {
+			return def.EnteringOrb // backward compatible: return entering orb
+		}
+	}
+	return 0
+}
+
+// GetEnteringOrb returns the entering orb for an aspect type (backward compatible).
+func (o OrbConfig) GetEnteringOrb(at AspectType) float64 {
+	return o.GetOrb(at)
+}
+
+// GetExitingOrb returns the exiting orb for an aspect type (backward compatible).
+func (o OrbConfig) GetExitingOrb(at AspectType) float64 {
+	defs := o.GetAspectDefs()
+	for _, def := range defs {
+		if def.Name == string(at) && def.Enabled {
+			return def.ExitingOrb
+		}
+	}
+	return 0
 }
 
 // ChartType represents which chart a body belongs to

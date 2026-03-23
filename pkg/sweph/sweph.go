@@ -1,7 +1,7 @@
 package sweph
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/../../third_party/swisseph
+#cgo CFLAGS: -I${SRCDIR}/../../third_party/swisseph -DTLSOFF
 
 #include "swephexp.h"
 #include "swehouse.h"
@@ -27,6 +27,20 @@ static double house_pos(double armc, double geolat, double eps, int hsys, double
 static int heliacal_ut(double jd_start, double *dgeo, double *datm, double *dobs,
                         char *object_name, int type_event, int iflag, double *dret, char *serr) {
     return swe_heliacal_ut(jd_start, dgeo, datm, dobs, object_name, type_event, iflag, dret, serr);
+}
+
+// Wrapper for house calculation with cusp speeds (swe_houses_ex2)
+static int houses_ex2(double jd_ut, int iflag, double lat, double lon, int hsys,
+                       double *cusps, double *ascmc, double *cusp_speed, double *ascmc_speed) {
+    return swe_houses_ex2(jd_ut, iflag, lat, lon, hsys, cusps, ascmc, cusp_speed, ascmc_speed, NULL);
+}
+
+// Wrapper for sidereal mode + ayanamsa
+static void set_sid_mode(int sid_mode, double t0, double ayan_t0) {
+    swe_set_sid_mode(sid_mode, t0, ayan_t0);
+}
+static double get_ayanamsa_ut(double jd_ut) {
+    return swe_get_ayanamsa_ut(jd_ut);
 }
 */
 import "C"
@@ -76,6 +90,7 @@ const (
 	HouseTopocentric    = 'T' // Polich-Page
 	HouseAlcabitius     = 'B'
 	HouseMeridian       = 'X' // Axial rotation / Meridian
+	HouseSripati        = 'S' // Sripati (Sri Pati) — traditional Indian system
 )
 
 // CalcResult holds the result of a planet calculation
@@ -194,6 +209,49 @@ func HousePos(armc, geoLat, eps float64, hsys int, lon, lat float64) (float64, e
 	return float64(pos), nil
 }
 
+// HousesEx2Result extends HouseResult with cusp and angle speeds (degrees/day).
+type HousesEx2Result struct {
+	HouseResult
+	CuspSpeeds [13]float64 // index 1-12 = cusp speeds in °/day
+	ASCSpeed   float64
+	MCSpeed    float64
+}
+
+// HousesEx2 calculates house cusps, angles, and their speeds using swe_houses_ex2.
+// The speed data is useful for progressed cusps and dynamic chart animation.
+func HousesEx2(jdUT float64, lat, lon float64, hsys int) (*HousesEx2Result, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	var cusps [13]C.double
+	var ascmc [10]C.double
+	var cuspSpeed [13]C.double
+	var ascmcSpeed [10]C.double
+
+	ret := C.houses_ex2(C.double(jdUT), C.int(0), C.double(lat), C.double(lon), C.int(hsys),
+		&cusps[0], &ascmc[0], &cuspSpeed[0], &ascmcSpeed[0])
+	if ret < 0 {
+		return nil, fmt.Errorf("swe_houses_ex2 error for house system %c", hsys)
+	}
+
+	result := &HousesEx2Result{
+		HouseResult: HouseResult{
+			ASC:    float64(ascmc[0]),
+			MC:     float64(ascmc[1]),
+			ARMC:   float64(ascmc[2]),
+			Vertex: float64(ascmc[3]),
+			EqASC:  float64(ascmc[4]),
+		},
+		ASCSpeed: float64(ascmcSpeed[0]),
+		MCSpeed:  float64(ascmcSpeed[1]),
+	}
+	for i := 0; i < 13; i++ {
+		result.Cusps[i] = float64(cusps[i])
+		result.CuspSpeeds[i] = float64(cuspSpeed[i])
+	}
+	return result, nil
+}
+
 // JulDay converts calendar date to Julian Day
 func JulDay(year, month, day int, hour float64, gregorian bool) float64 {
 	cal := C.int(C.SE_GREG_CAL)
@@ -304,4 +362,26 @@ func HeliacalUT(jdStart float64, geoLon, geoLat, geoAlt float64, objectName stri
 		JDOptimum: float64(dret[1]),
 		JDEnd:     float64(dret[2]),
 	}, nil
+}
+
+// Sidereal mode constants (Swiss Ephemeris SIDM_* values)
+const (
+	SidmLahiri      = 1  // Lahiri / Chitrapaksha
+	SidmRaman       = 3  // B.V. Raman
+	SidmKrishnamurti = 5 // Krishnamurti
+	SidmFaganBradley = 0 // Fagan-Bradley (Western sidereal)
+	SidmYukteshwar  = 7  // Sri Yukteshwar
+	SidmTrueCitra   = 27 // True Citra (True Chitrapaksha)
+	SidmTrueRevati  = 28 // True Revati
+	SidmTruePushya  = 29 // True Pushya
+	SidmTrueMula    = 35 // True Mula
+)
+
+// GetAyanamsaUT returns the precise ayanamsa value at a given Julian Day UT
+// using the Swiss Ephemeris native computation for the given sidereal mode.
+func GetAyanamsaUT(jdUT float64, sidMode int) float64 {
+	mu.Lock()
+	defer mu.Unlock()
+	C.set_sid_mode(C.int(sidMode), 0, 0)
+	return float64(C.get_ayanamsa_ut(C.double(jdUT)))
 }

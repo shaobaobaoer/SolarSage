@@ -19,35 +19,40 @@ import (
 type Ayanamsa string
 
 const (
-	AyanamsaLahiri      Ayanamsa = "LAHIRI"       // Most widely used in India
-	AyanamsaRaman       Ayanamsa = "RAMAN"         // B.V. Raman system
-	AyanamsaKrishnamurti Ayanamsa = "KRISHNAMURTI" // KP system
-	AyanamsaFaganBradley Ayanamsa = "FAGAN_BRADLEY" // Western sidereal
-	AyanamsaYukteshwar  Ayanamsa = "YUKTESHWAR"    // Sri Yukteshwar
+	AyanamsaLahiri       Ayanamsa = "LAHIRI"        // Most widely used in India
+	AyanamsaRaman        Ayanamsa = "RAMAN"          // B.V. Raman system
+	AyanamsaKrishnamurti Ayanamsa = "KRISHNAMURTI"   // KP system
+	AyanamsaFaganBradley Ayanamsa = "FAGAN_BRADLEY"  // Western sidereal
+	AyanamsaYukteshwar   Ayanamsa = "YUKTESHWAR"     // Sri Yukteshwar
+	AyanamsaTrueCitra    Ayanamsa = "TRUE_CITRA"     // True Chitrapaksha
+	AyanamsaTrueRevati   Ayanamsa = "TRUE_REVATI"    // True Revati
+	AyanamsaTruePushya   Ayanamsa = "TRUE_PUSHYA"    // True Pushya
+	AyanamsaTrueMula     Ayanamsa = "TRUE_MULA"      // True Mula
 )
 
-// ayanamsaJ2000 stores the ayanamsa value at J2000.0 for each system
-var ayanamsaJ2000 = map[Ayanamsa]float64{
-	AyanamsaLahiri:       23.853,  // Lahiri at J2000.0
-	AyanamsaRaman:        22.378,  // Raman at J2000.0
-	AyanamsaKrishnamurti: 23.795,  // Krishnamurti at J2000.0
-	AyanamsaFaganBradley: 24.736,  // Fagan-Bradley at J2000.0
-	AyanamsaYukteshwar:   22.277,  // Yukteshwar at J2000.0
+// ayanamsaSidMode maps each Ayanamsa to the Swiss Ephemeris SIDM_* constant.
+// Values match the swe_set_sid_mode() constants in swephexp.h.
+var ayanamsaSidMode = map[Ayanamsa]int{
+	AyanamsaFaganBradley: sweph.SidmFaganBradley,
+	AyanamsaLahiri:       sweph.SidmLahiri,
+	AyanamsaRaman:        sweph.SidmRaman,
+	AyanamsaKrishnamurti: sweph.SidmKrishnamurti,
+	AyanamsaYukteshwar:   sweph.SidmYukteshwar,
+	AyanamsaTrueCitra:    sweph.SidmTrueCitra,
+	AyanamsaTrueRevati:   sweph.SidmTrueRevati,
+	AyanamsaTruePushya:   sweph.SidmTruePushya,
+	AyanamsaTrueMula:     sweph.SidmTrueMula,
 }
 
-// precessionRate is approximately 50.2882 arcseconds per year
-const precessionRate = 50.2882 / 3600.0
-const j2000Epoch = 2451545.0
-const julianYear = 365.25
-
-// GetAyanamsa returns the ayanamsa (sidereal offset) at a given JD for the specified system.
+// GetAyanamsa returns the precise ayanamsa value at a given JD UT using the
+// Swiss Ephemeris native computation. Replaces the previous linear approximation
+// which could drift up to 0.3° from the true value.
 func GetAyanamsa(jdUT float64, system Ayanamsa) (float64, error) {
-	base, ok := ayanamsaJ2000[system]
+	sidMode, ok := ayanamsaSidMode[system]
 	if !ok {
 		return 0, fmt.Errorf("unknown ayanamsa system: %s", system)
 	}
-	yearsSinceJ2000 := (jdUT - j2000Epoch) / julianYear
-	return base + yearsSinceJ2000*precessionRate, nil
+	return sweph.GetAyanamsaUT(jdUT, sidMode), nil
 }
 
 // TropicalToSidereal converts a tropical ecliptic longitude to sidereal.
@@ -227,6 +232,299 @@ var dashaSequence = []models.PlanetID{
 	models.PlanetJupiter, // Jupiter (16 years)
 	models.PlanetSaturn,  // Saturn (19 years)
 	models.PlanetMercury, // Mercury (17 years)
+}
+
+// ---- Ashtottari Dasha (108-year cycle) ----
+
+// ashtottariYears maps planets to their Ashtottari Maha Dasha durations (total = 108 years).
+// Sequence: Sun(6) Venus(20) Moon(15) Mars(8) Mercury(17) Jupiter(10) Saturn(19) Rahu(12)->Saturn proxy.
+// Lord sequence used for the 8-planet system (Rahu represented as extra Saturn slot).
+var ashtottariYears = map[models.PlanetID]float64{
+	models.PlanetSun:     6,
+	models.PlanetVenus:   20,
+	models.PlanetMoon:    15,
+	models.PlanetMars:    8,
+	models.PlanetMercury: 17,
+	models.PlanetJupiter: 10,
+	models.PlanetSaturn:  19, // Rahu (12) + Saturn (19) merged; canonical Ashtottari uses Rahu separately
+}
+
+// ashtottariSequence is the 8-planet Ashtottari sequence.
+// Ketu is omitted in this system; the sequence is Sun-Venus-Moon-Mars-Mercury-Jupiter-Saturn-Rahu(->Saturn).
+var ashtottariSequence = []models.PlanetID{
+	models.PlanetSun,
+	models.PlanetVenus,
+	models.PlanetMoon,
+	models.PlanetMars,
+	models.PlanetMercury,
+	models.PlanetJupiter,
+	models.PlanetSaturn,
+	models.PlanetSaturn, // Rahu slot (proxy)
+}
+
+// ashtottariFullYears gives the canonical year per slot in ashtottariSequence
+var ashtottariFullYears = []float64{6, 20, 15, 8, 17, 10, 19, 12}
+
+// ashtottariNakshatra maps Nakshatra index (0-26) to the starting dasha planet index
+// in ashtottariSequence. The 27 Nakshatras distribute evenly over the 8 lords.
+var ashtottariNakshatraLord = []int{
+	// Ashwini(0)-Revati(26): repeating pattern Sun,Venus,Moon,Mars,Mercury,Jupiter,Saturn,Rahu
+	0, 1, 2, 3, 4, 5, 6, 7, // 0-7
+	0, 1, 2, 3, 4, 5, 6, 7, // 8-15
+	0, 1, 2, 3, 4, 5, 6, 7, // 16-23
+	0, 1, 2, // 24-26
+}
+
+// CalcAshtottariDasha calculates the Ashtottari (108-year) Maha Dasha sequence.
+// Valid for charts where the Moon occupies a Rahu-associated Nakshatra or
+// for charts with an Aquarius Lagna; widely used in Kerala tradition.
+func CalcAshtottariDasha(moonSiderealLon float64) []DashaPeriod {
+	moonSiderealLon = math.Mod(moonSiderealLon, 360)
+	if moonSiderealLon < 0 {
+		moonSiderealLon += 360
+	}
+
+	nakshatraSpan := 360.0 / 27.0
+	nakIdx := int(moonSiderealLon / nakshatraSpan)
+	if nakIdx >= 27 {
+		nakIdx = 26
+	}
+
+	startSlot := ashtottariNakshatraLord[nakIdx]
+	totalYears := 0.0
+	for _, y := range ashtottariFullYears {
+		totalYears += y
+	}
+
+	// Fraction elapsed in the first nakshatra
+	posInNak := moonSiderealLon - float64(nakIdx)*nakshatraSpan
+	fractionUsed := posInNak / nakshatraSpan
+	firstDashaFull := ashtottariFullYears[startSlot]
+	firstDashaRemaining := firstDashaFull * (1 - fractionUsed)
+
+	var periods []DashaPeriod
+	age := 0.0
+
+	periods = append(periods, DashaPeriod{
+		Lord:     ashtottariSequence[startSlot],
+		Years:    math.Round(firstDashaRemaining*100) / 100,
+		StartAge: age,
+	})
+	age += firstDashaRemaining
+
+	for i := 1; i < len(ashtottariSequence); i++ {
+		slot := (startSlot + i) % len(ashtottariSequence)
+		years := ashtottariFullYears[slot]
+		periods = append(periods, DashaPeriod{
+			Lord:     ashtottariSequence[slot],
+			Years:    years,
+			StartAge: math.Round(age*100) / 100,
+		})
+		age += years
+	}
+
+	return periods
+}
+
+// ---- Yogini Dasha (36-year cycle) ----
+
+// YoginiName represents one of the 8 Yogini Dasha periods
+type YoginiName string
+
+const (
+	YoginiMangala  YoginiName = "Mangala" // Moon (1 year)
+	YoginiPingala  YoginiName = "Pingala" // Sun (2 years)
+	YoginiBhramari  YoginiName = "Bhramari"  // Jupiter (3 years)
+	YoginiBhadrika  YoginiName = "Bhadrika"  // Mercury (4 years)
+	YoginiUlka      YoginiName = "Ulka"      // Saturn (5 years)
+	YoginiSiddha    YoginiName = "Siddha"    // Venus (6 years)
+	YoginiSankata   YoginiName = "Sankata"   // Rahu/Saturn (7 years)
+	YoginaDhanya YoginiName = "Dhanya" // Mars (8 years)
+)
+
+// YoginiDashaPeriod extends DashaPeriod with the Yogini name
+type YoginiDashaPeriod struct {
+	DashaPeriod
+	Yogini YoginiName `json:"yogini"`
+}
+
+// yoginiData pairs each of the 8 Yoginis with its ruling planet and duration.
+// Sequence starts from Mangala and repeats over the 36-year total cycle.
+var yoginiData = []struct {
+	Yogini YoginiName
+	Lord   models.PlanetID
+	Years  float64
+}{
+	{YoginiMangala, models.PlanetMoon, 1},
+	{YoginiPingala, models.PlanetSun, 2},
+	{YoginiBhramari, models.PlanetJupiter, 3},
+	{YoginiBhadrika, models.PlanetMercury, 4},
+	{YoginiUlka, models.PlanetSaturn, 5},
+	{YoginiSiddha, models.PlanetVenus, 6},
+	{YoginiSankata, models.PlanetSaturn, 7}, // Rahu -> Saturn proxy
+	{YoginaDhanya, models.PlanetMars, 8},
+}
+
+// yoginiNakshatraStart maps Nakshatra index (0-26) to Yogini slot index (0-7).
+// Each of the 27 Nakshatras is assigned to one of the 8 Yoginis in a repeating cycle.
+var yoginiNakshatraStart = [27]int{
+	0, 1, 2, 3, 4, 5, 6, 7, // Naks 0-7
+	0, 1, 2, 3, 4, 5, 6, 7, // Naks 8-15
+	0, 1, 2, 3, 4, 5, 6, 7, // Naks 16-23
+	0, 1, 2, // Naks 24-26
+}
+
+// CalcYoginiDasha calculates the Yogini Dasha sequence (36-year cycle) from birth.
+// Each cycle repeats every 36 years (sum of 1+2+3+4+5+6+7+8).
+func CalcYoginiDasha(moonSiderealLon float64) []YoginiDashaPeriod {
+	moonSiderealLon = math.Mod(moonSiderealLon, 360)
+	if moonSiderealLon < 0 {
+		moonSiderealLon += 360
+	}
+
+	nakshatraSpan := 360.0 / 27.0
+	nakIdx := int(moonSiderealLon / nakshatraSpan)
+	if nakIdx >= 27 {
+		nakIdx = 26
+	}
+
+	startSlot := yoginiNakshatraStart[nakIdx]
+
+	posInNak := moonSiderealLon - float64(nakIdx)*nakshatraSpan
+	fractionUsed := posInNak / nakshatraSpan
+	firstFull := yoginiData[startSlot].Years
+	firstRemaining := firstFull * (1 - fractionUsed)
+
+	var periods []YoginiDashaPeriod
+	age := 0.0
+
+	periods = append(periods, YoginiDashaPeriod{
+		DashaPeriod: DashaPeriod{
+			Lord:     yoginiData[startSlot].Lord,
+			Years:    math.Round(firstRemaining*100) / 100,
+			StartAge: age,
+		},
+		Yogini: yoginiData[startSlot].Yogini,
+	})
+	age += firstRemaining
+
+	for i := 1; i < len(yoginiData); i++ {
+		slot := (startSlot + i) % len(yoginiData)
+		d := yoginiData[slot]
+		periods = append(periods, YoginiDashaPeriod{
+			DashaPeriod: DashaPeriod{
+				Lord:     d.Lord,
+				Years:    d.Years,
+				StartAge: math.Round(age*100) / 100,
+			},
+			Yogini: d.Yogini,
+		})
+		age += d.Years
+	}
+
+	return periods
+}
+
+// ---- Chara (Jaimini) Dasha ----
+
+// CharaDashaPeriod represents one sign-based dasha period in the Jaimini system.
+type CharaDashaPeriod struct {
+	Sign     string  `json:"sign"`      // Zodiac sign name
+	SignIdx  int     `json:"sign_index"` // 0-11
+	Years    int     `json:"years"`     // Duration in years (1-12)
+	StartAge float64 `json:"start_age"`
+}
+
+// CalcCharaDasha computes the Chara (Jaimini) Dasha sequence based on the
+// Lagna (Ascendant) sign. Chara Dasha is sign-based rather than planet-based.
+//
+// Rules (BPHS Jaimini Sutras):
+//   - The sequence starts from the Lagna sign.
+//   - For odd signs (Aries, Gemini, Leo, Libra, Sagittarius, Aquarius),
+//     the sequence proceeds in direct order (zodiacal).
+//   - For even signs (Taurus, Cancer, Virgo, Scorpio, Capricorn, Pisces),
+//     the sequence proceeds in reverse order (anti-zodiacal).
+//   - Duration of each sign's dasha = distance from the sign's ruler to the sign,
+//     counting inclusively. If the ruler is in its own sign, the duration is 12 years.
+//
+// Parameters:
+//   - lagnaSignIdx: sidereal sign index of the Ascendant (0=Aries, 11=Pisces)
+//   - planetSignPositions: map of planet → sign index (0-11), sidereal
+func CalcCharaDasha(lagnaSignIdx int, planetSignPositions map[models.PlanetID]int) []CharaDashaPeriod {
+	isOdd := lagnaSignIdx%2 == 0 // 0=Aries(odd), 1=Taurus(even), etc.
+
+	var periods []CharaDashaPeriod
+	age := 0.0
+
+	for i := 0; i < 12; i++ {
+		var signIdx int
+		if isOdd {
+			signIdx = (lagnaSignIdx + i) % 12
+		} else {
+			signIdx = (lagnaSignIdx - i + 12) % 12
+		}
+
+		ruler := charaSignRuler[signIdx]
+		rulerSign, ok := planetSignPositions[ruler]
+		if !ok {
+			rulerSign = signIdx // fallback: ruler in own sign
+		}
+
+		years := charaDuration(signIdx, rulerSign, signIdx%2 == 0)
+
+		periods = append(periods, CharaDashaPeriod{
+			Sign:     models.ZodiacSigns[signIdx],
+			SignIdx:  signIdx,
+			Years:    years,
+			StartAge: math.Round(age*100) / 100,
+		})
+		age += float64(years)
+	}
+
+	return periods
+}
+
+// charaSignRuler maps each sign to its Jaimini ruler.
+// Jaimini uses the same rulers as Parashari for most signs, but some
+// traditions assign co-rulers. We use the standard BPHS assignment.
+var charaSignRuler = [12]models.PlanetID{
+	models.PlanetMars,    // 0 Aries
+	models.PlanetVenus,   // 1 Taurus
+	models.PlanetMercury, // 2 Gemini
+	models.PlanetMoon,    // 3 Cancer
+	models.PlanetSun,     // 4 Leo
+	models.PlanetMercury, // 5 Virgo
+	models.PlanetVenus,   // 6 Libra
+	models.PlanetMars,    // 7 Scorpio
+	models.PlanetJupiter, // 8 Sagittarius
+	models.PlanetSaturn,  // 9 Capricorn
+	models.PlanetSaturn,  // 10 Aquarius
+	models.PlanetJupiter, // 11 Pisces
+}
+
+// charaDuration calculates the Chara Dasha period length for a sign.
+// For odd signs: count from sign to ruler's sign (direct, inclusive).
+// For even signs: count from sign to ruler's sign (reverse, inclusive).
+// If ruler is in its own sign, the duration is 12 years.
+func charaDuration(signIdx, rulerSignIdx int, isOddSign bool) int {
+	if signIdx == rulerSignIdx {
+		return 12
+	}
+
+	var dist int
+	if isOddSign {
+		// Direct counting: how many signs from signIdx to rulerSignIdx, going forward
+		dist = (rulerSignIdx - signIdx + 12) % 12
+	} else {
+		// Reverse counting: how many signs from signIdx to rulerSignIdx, going backward
+		dist = (signIdx - rulerSignIdx + 12) % 12
+	}
+
+	if dist == 0 {
+		dist = 12
+	}
+
+	return dist
 }
 
 // CalcVimshottariDasha calculates the Maha Dasha sequence starting from birth.

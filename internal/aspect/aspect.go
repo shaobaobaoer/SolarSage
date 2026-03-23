@@ -49,16 +49,41 @@ func FindAspects(bodiesA, bodiesB []Body, orbs models.OrbConfig, sameSet bool) [
 
 			angle := AngleDiff(a.Longitude, b.Longitude)
 
-			for _, asp := range models.StandardAspects {
-				orb := orbs.GetOrb(asp.Type)
-				diff := math.Abs(angle - asp.Angle)
+			// Get aspect definitions from config
+		aspectDefs := orbs.GetAspectDefs()
+
+		for _, def := range aspectDefs {
+				if !def.Enabled {
+					continue
+				}
+				diff := math.Abs(angle - def.Angle)
+				isApplying := computeApplying(a, b, def.Angle)
+
+				// Use entering (applying) or exiting (separating) orb based on aspect direction
+				var orb float64
+				if isApplying {
+					orb = def.EnteringOrb
+				} else {
+					orb = def.ExitingOrb
+				}
+
 				if diff <= orb {
-					isApplying := computeApplying(a, b, asp.Angle)
+					// Find the aspect type from StandardAspects for the name
+					var aspectType models.AspectType
+					for _, sa := range models.StandardAspects {
+						if math.Abs(sa.Angle-def.Angle) < 1.0 {
+							aspectType = sa.Type
+							break
+						}
+					}
+					if aspectType == "" {
+						aspectType = models.AspectType(def.Name)
+					}
 					aspects = append(aspects, models.AspectInfo{
 						PlanetA:     a.ID,
 						PlanetB:     b.ID,
-						AspectType:  asp.Type,
-						AspectAngle: asp.Angle,
+						AspectType:  aspectType,
+						AspectAngle: def.Angle,
 						ActualAngle: angle,
 						Orb:         diff,
 						IsApplying:  isApplying,
@@ -75,25 +100,48 @@ func FindAspects(bodiesA, bodiesB []Body, orbs models.OrbConfig, sameSet bool) [
 // FindCrossAspects finds aspects between inner and outer chart bodies
 func FindCrossAspects(inner, outer []Body, orbs models.OrbConfig) []models.CrossAspectInfo {
 	var aspects []models.CrossAspectInfo
+	aspectDefs := orbs.GetAspectDefs()
 
 	for _, a := range inner {
 		for _, b := range outer {
 			angle := AngleDiff(a.Longitude, b.Longitude)
 
-			for _, asp := range models.StandardAspects {
-				orb := orbs.GetOrb(asp.Type)
-				diff := math.Abs(angle - asp.Angle)
+			for _, def := range aspectDefs {
+				if !def.Enabled {
+					continue
+				}
+				diff := math.Abs(angle - def.Angle)
+				isApplying := computeApplying(
+					Body{ID: a.ID, Longitude: a.Longitude, Speed: a.Speed},
+					Body{ID: b.ID, Longitude: b.Longitude, Speed: b.Speed},
+					def.Angle,
+				)
+
+				// Use entering (applying) or exiting (separating) orb based on aspect direction
+				var orb float64
+				if isApplying {
+					orb = def.EnteringOrb
+				} else {
+					orb = def.ExitingOrb
+				}
+
 				if diff <= orb {
-					isApplying := computeApplying(
-						Body{ID: a.ID, Longitude: a.Longitude, Speed: a.Speed},
-						Body{ID: b.ID, Longitude: b.Longitude, Speed: b.Speed},
-						asp.Angle,
-					)
+					// Find the aspect type from StandardAspects for the name
+					var aspectType models.AspectType
+					for _, sa := range models.StandardAspects {
+						if math.Abs(sa.Angle-def.Angle) < 1.0 {
+							aspectType = sa.Type
+							break
+						}
+					}
+					if aspectType == "" {
+						aspectType = models.AspectType(def.Name)
+					}
 					aspects = append(aspects, models.CrossAspectInfo{
 						InnerBody:   a.ID,
 						OuterBody:   b.ID,
-						AspectType:  asp.Type,
-						AspectAngle: asp.Angle,
+						AspectType:  aspectType,
+						AspectAngle: def.Angle,
 						ActualAngle: angle,
 						Orb:         diff,
 						IsApplying:  isApplying,

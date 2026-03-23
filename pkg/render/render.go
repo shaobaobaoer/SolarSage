@@ -17,10 +17,12 @@ type Point struct {
 
 // PlanetGlyph holds rendering data for a planet on the chart wheel
 type PlanetGlyph struct {
-	PlanetID models.PlanetID `json:"planet_id"`
-	Position Point           `json:"position"`
-	Angle    float64         `json:"angle"` // degrees from ASC (counter-clockwise)
-	Ring     float64         `json:"ring"`  // 0=center, 1=outer
+	PlanetID     models.PlanetID `json:"planet_id"`
+	Position     Point           `json:"position"`
+	Angle        float64         `json:"angle"`        // true ecliptic angle from ASC (counter-clockwise)
+	DisplayAngle float64         `json:"display_angle"` // angle after collision resolution (may differ from Angle)
+	Displaced    bool            `json:"displaced"`    // true if the glyph was moved to avoid collision
+	Ring         float64         `json:"ring"`         // 0=center, 1=outer
 }
 
 // HouseLine holds rendering data for a house cusp line
@@ -73,10 +75,12 @@ func CalcChartWheel(chartInfo *models.ChartInfo, radius float64) *ChartWheel {
 		angle := lonToAngle(p.Longitude, ascLon)
 		pt := polarToCartesian(center, planetRing, angle)
 		wheel.Planets = append(wheel.Planets, PlanetGlyph{
-			PlanetID: p.PlanetID,
-			Position: pt,
-			Angle:    angle,
-			Ring:     0.75,
+			PlanetID:     p.PlanetID,
+			Position:     pt,
+			Angle:        angle,
+			DisplayAngle: angle,
+			Displaced:    false,
+			Ring:         0.75,
 		})
 	}
 
