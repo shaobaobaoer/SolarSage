@@ -137,3 +137,55 @@ func TestComputeApplying(t *testing.T) {
 		t.Error("A separating from B for conjunction should not be applying")
 	}
 }
+
+func TestFindAspects_EnteringExitingOrbs(t *testing.T) {
+	// Test entering (applying) orb is used for approaching aspect
+	orbs := models.OrbConfig{
+		Definitions: []models.AspectOrbDef{
+			{Name: "conjunction", Angle: 0, EnteringOrb: 10, ExitingOrb: 2, Enabled: true},
+		},
+	}
+
+	// A approaching B for conjunction (applying) - should use entering orb (10°)
+	approaching := []Body{{ID: "A", Longitude: 95, Speed: 1.5}}
+	stationary := []Body{{ID: "B", Longitude: 100, Speed: 0.5}}
+
+	aspects := FindAspects(approaching, stationary, orbs, false)
+	if len(aspects) != 1 {
+		t.Fatalf("Expected 1 aspect with entering orb 10°, got %d", len(aspects))
+	}
+	if !aspects[0].IsApplying {
+		t.Error("Expected applying aspect")
+	}
+
+	// A separating from B (separating) - should use exiting orb (2°)
+	// Position: 5° apart but separating, outside 2° exiting orb
+	separatingA := []Body{{ID: "A", Longitude: 105, Speed: 1.5}} // moving away
+	separatingB := []Body{{ID: "B", Longitude: 100, Speed: 0.5}}
+
+	aspects = FindAspects(separatingA, separatingB, orbs, false)
+	if len(aspects) != 0 {
+		t.Errorf("Expected 0 aspects (5° > 2° exiting orb), got %d", len(aspects))
+	}
+}
+
+func TestFindAspects_EnteringOrbOnly(t *testing.T) {
+	// Only entering orb configured, exiting uses the same value
+	orbs := models.OrbConfig{
+		Definitions: []models.AspectOrbDef{
+			{Name: "trine", Angle: 120, EnteringOrb: 10, ExitingOrb: 5, Enabled: true},
+		},
+	}
+
+	// Approaching trine at 8° (within entering orb 10°)
+	a := []Body{{ID: "A", Longitude: 0, Speed: 1.5}}
+	b := []Body{{ID: "B", Longitude: 128, Speed: 0.5}}
+
+	aspects := FindAspects(a, b, orbs, false)
+	if len(aspects) != 1 {
+		t.Fatalf("Expected 1 aspect with entering orb, got %d", len(aspects))
+	}
+	if aspects[0].AspectType != models.AspectTrine {
+		t.Errorf("Expected trine, got %s", aspects[0].AspectType)
+	}
+}

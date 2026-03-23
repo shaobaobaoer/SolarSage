@@ -49,6 +49,53 @@ type Server struct {
 	ephePath string
 }
 
+// orbConfigSchema defines the JSON schema for orb configuration with entering/exiting support
+var orbConfigSchema = json.RawMessage(`{
+	"type": "object",
+	"description": "Aspect orb configuration. Supports unified orbs or separate entering/exiting orbs.",
+	"properties": {
+		"conjunction": {"type": "number", "default": 8, "description": "Orb for conjunction (0°)"},
+		"opposition": {"type": "number", "default": 8, "description": "Orb for opposition (180°)"},
+		"trine": {"type": "number", "default": 7, "description": "Orb for trine (120°)"},
+		"square": {"type": "number", "default": 7, "description": "Orb for square (90°)"},
+		"sextile": {"type": "number", "default": 5, "description": "Orb for sextile (60°)"},
+		"quincunx": {"type": "number", "default": 3, "description": "Orb for quincunx (150°)"},
+		"semi_sextile": {"type": "number", "default": 2, "description": "Orb for semi-sextile (30°)"},
+		"semi_square": {"type": "number", "default": 2, "description": "Orb for semi-square (45°)"},
+		"sesquiquadrate": {"type": "number", "default": 2, "description": "Orb for sesquiquadrate (135°)"},
+		"entering_orbs": {
+			"type": "object",
+			"description": "Separate orbs for entering/applying aspects (overrides main orbs when specified)",
+			"properties": {
+				"conjunction": {"type": "number"},
+				"opposition": {"type": "number"},
+				"trine": {"type": "number"},
+				"square": {"type": "number"},
+				"sextile": {"type": "number"},
+				"quincunx": {"type": "number"},
+				"semi_sextile": {"type": "number"},
+				"semi_square": {"type": "number"},
+				"sesquiquadrate": {"type": "number"}
+			}
+		},
+		"exiting_orbs": {
+			"type": "object",
+			"description": "Separate orbs for exiting/separating aspects (overrides main orbs when specified)",
+			"properties": {
+				"conjunction": {"type": "number"},
+				"opposition": {"type": "number"},
+				"trine": {"type": "number"},
+				"square": {"type": "number"},
+				"sextile": {"type": "number"},
+				"quincunx": {"type": "number"},
+				"semi_sextile": {"type": "number"},
+				"semi_square": {"type": "number"},
+				"sesquiquadrate": {"type": "number"}
+			}
+		}
+	}
+}`)
+
 // NewServer creates a new MCP server
 func NewServer(ephePath string) *Server {
 	return &Server{ephePath: ephePath}

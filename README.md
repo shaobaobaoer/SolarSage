@@ -324,10 +324,18 @@ func main() {
     }
 
     // Full control over orbs, house system, and planet selection
+    // New: orb_config supports entering/exiting orbs for applying/separating aspects
     info, _ := chart.CalcSingleChart(
         51.5074, -0.1278, 2451545.0,
         planets,
-        models.OrbConfig{Conjunction: 10, Trine: 8, Square: 8},
+        models.OrbConfig{
+            Definitions: []models.AspectOrbDef{
+                {Name: "conjunction", Angle: 0, EnteringOrb: 10, ExitingOrb: 3, Enabled: true},
+                {Name: "opposition", Angle: 180, EnteringOrb: 10, ExitingOrb: 3, Enabled: true},
+                {Name: "trine", Angle: 120, EnteringOrb: 8, ExitingOrb: 2, Enabled: true},
+                {Name: "square", Angle: 90, EnteringOrb: 8, ExitingOrb: 2, Enabled: true},
+            },
+        },
         models.HouseKoch,
     )
 
@@ -440,6 +448,28 @@ func main() {
 ## REST API Reference
 
 All endpoints are `POST /api/v1/<path>` and accept/return JSON. CORS is enabled on all routes. Optional authentication via `X-API-Key` header.
+
+### Common Parameters
+
+Most chart endpoints accept an optional `orb_config` parameter for customizing aspect orbs:
+
+```json
+{
+  "orb_config": {
+    "definitions": [
+      {"name": "conjunction", "angle": 0, "entering_orb": 10, "exiting_orb": 3, "enabled": true},
+      {"name": "opposition", "angle": 180, "entering_orb": 10, "exiting_orb": 3, "enabled": true},
+      {"name": "trine", "angle": 120, "entering_orb": 8, "exiting_orb": 2, "enabled": true},
+      {"name": "square", "angle": 90, "entering_orb": 8, "exiting_orb": 2, "enabled": true},
+      {"name": "sextile", "angle": 60, "entering_orb": 5, "exiting_orb": 2, "enabled": true}
+    ]
+  }
+}
+```
+
+- `entering_orb`: Orb for applying/entering aspects (planets moving toward exact)
+- `exiting_orb`: Orb for separating/exiting aspects (planets moving away from exact)
+- Custom aspects can be defined with any angle (e.g., quintile at 72°)
 
 | Endpoint | Description |
 |----------|-------------|
