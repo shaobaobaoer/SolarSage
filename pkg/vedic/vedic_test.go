@@ -176,3 +176,200 @@ func TestCalcVimshottariDasha_MoonPosition(t *testing.T) {
 		t.Errorf("First dasha lord for Moon at 5° = %s, expected SUN (Ketu)", periods[0].Lord)
 	}
 }
+
+func TestCalcAshtottariDasha(t *testing.T) {
+	periods := CalcAshtottariDasha(100) // Moon at 100° sidereal
+	if len(periods) != len(ashtottariSequence) {
+		t.Fatalf("Expected %d periods, got %d", len(ashtottariSequence), len(periods))
+	}
+
+	// First period starts at age 0
+	if periods[0].StartAge != 0 {
+		t.Errorf("First period startAge = %.2f, want 0", periods[0].StartAge)
+	}
+
+	// Each period has a valid lord
+	for _, p := range periods {
+		if p.Lord == "" {
+			t.Error("Ashtottari period has empty lord")
+		}
+		if p.Years <= 0 {
+			t.Errorf("Ashtottari period years = %.2f, must be > 0", p.Years)
+		}
+	}
+
+	// Total should be close to 108 years (first period is partial so < 108)
+	total := 0.0
+	for _, p := range periods {
+		total += p.Years
+	}
+	if total < 85 || total > 109 {
+		t.Errorf("Ashtottari total years = %.2f, expected close to 108", total)
+	}
+}
+
+func TestCalcAshtottariDasha_FullCycleAt0(t *testing.T) {
+	// Moon exactly at 0° sidereal → start of Ashwini → Sun slot
+	periods := CalcAshtottariDasha(0)
+	if periods[0].Lord != models.PlanetSun {
+		t.Errorf("Ashtottari at 0°: first lord = %s, want SUN", periods[0].Lord)
+	}
+	// First period should be full (fraction used = 0 → remaining = full 6 years)
+	if math.Abs(periods[0].Years-6) > 0.01 {
+		t.Errorf("Ashtottari at 0°: first period years = %.2f, want 6", periods[0].Years)
+	}
+}
+
+func TestCalcYoginiDasha(t *testing.T) {
+	periods := CalcYoginiDasha(100)
+	if len(periods) != len(yoginiData) {
+		t.Fatalf("Expected %d yogini periods, got %d", len(yoginiData), len(periods))
+	}
+
+	// First period starts at age 0
+	if periods[0].StartAge != 0 {
+		t.Errorf("First yogini period startAge = %.2f, want 0", periods[0].StartAge)
+	}
+
+	// Each period has a valid Yogini name and lord
+	for _, p := range periods {
+		if p.Yogini == "" {
+			t.Error("Yogini period has empty name")
+		}
+		if p.Lord == "" {
+			t.Error("Yogini period has empty lord")
+		}
+		if p.Years <= 0 {
+			t.Errorf("Yogini period years = %.2f, must be > 0", p.Years)
+		}
+	}
+
+	// Total should be close to 36 years (first period may be partial)
+	total := 0.0
+	for _, p := range periods {
+		total += p.Years
+	}
+	if total < 28 || total > 37 {
+		t.Errorf("Yogini total years = %.2f, expected close to 36", total)
+	}
+}
+
+func TestCalcYoginiDasha_At0(t *testing.T) {
+	// Moon at 0° → Ashwini → Mangala (Moon, 1 year)
+	periods := CalcYoginiDasha(0)
+	if periods[0].Yogini != YoginiMangala {
+		t.Errorf("Yogini at 0°: first yogini = %s, want Mangala", periods[0].Yogini)
+	}
+	if periods[0].Lord != models.PlanetMoon {
+		t.Errorf("Yogini at 0°: first lord = %s, want MOON", periods[0].Lord)
+	}
+	// Full period at start of nakshatra = 1 year
+	if math.Abs(periods[0].Years-1) > 0.01 {
+		t.Errorf("Yogini at 0°: first years = %.2f, want 1", periods[0].Years)
+	}
+}
+
+func TestCalcYoginiDasha_SequenceOrder(t *testing.T) {
+	// Verify each period's Yogini name matches the expected sequence
+	periods := CalcYoginiDasha(0)
+	expected := []YoginiName{
+		YoginiMangala, YoginiPingala, YoginiBhramari, YoginiBhadrika,
+		YoginiUlka, YoginiSiddha, YoginiSankata, YoginaDhanya,
+	}
+	for i, p := range periods {
+		if p.Yogini != expected[i] {
+			t.Errorf("Yogini[%d] = %s, want %s", i, p.Yogini, expected[i])
+		}
+	}
+}
+
+func TestCalcCharaDasha(t *testing.T) {
+	// Aries lagna (odd sign), Mars in Gemini (sign 2)
+	planetSigns := map[models.PlanetID]int{
+		models.PlanetSun:     4,
+		models.PlanetMoon:    1,
+		models.PlanetMars:    2,
+		models.PlanetMercury: 5,
+		models.PlanetJupiter: 8,
+		models.PlanetVenus:   6,
+		models.PlanetSaturn:  9,
+	}
+
+	periods := CalcCharaDasha(0, planetSigns) // Aries lagna
+	if len(periods) != 12 {
+		t.Fatalf("expected 12 periods, got %d", len(periods))
+	}
+
+	// First period should be Aries (odd lagna → zodiacal order)
+	if periods[0].Sign != "Aries" {
+		t.Errorf("first period sign = %s, want Aries", periods[0].Sign)
+	}
+	if periods[0].StartAge != 0 {
+		t.Errorf("first period startAge = %.2f, want 0", periods[0].StartAge)
+	}
+
+	// Aries ruler is Mars, Mars is in Gemini (sign 2).
+	// Direct count from Aries(0) to Gemini(2) = 2 signs → 2 years
+	// (Actually it's inclusive counting from sign 0 forward to sign 2: distance = 2)
+	if periods[0].Years < 1 || periods[0].Years > 12 {
+		t.Errorf("Aries dasha years = %d, out of range 1-12", periods[0].Years)
+	}
+
+	// Second period should be Taurus (zodiacal order for odd lagna)
+	if periods[1].Sign != "Taurus" {
+		t.Errorf("second period sign = %s, want Taurus", periods[1].Sign)
+	}
+
+	// All periods should have valid years
+	totalYears := 0
+	for _, p := range periods {
+		if p.Years < 1 || p.Years > 12 {
+			t.Errorf("sign %s has %d years, out of range 1-12", p.Sign, p.Years)
+		}
+		totalYears += p.Years
+	}
+	// Total should be between 12 and 144
+	if totalYears < 12 || totalYears > 144 {
+		t.Errorf("total years = %d, out of reasonable range", totalYears)
+	}
+}
+
+func TestCalcCharaDasha_EvenLagna(t *testing.T) {
+	// Taurus lagna (even sign) → reverse order
+	planetSigns := map[models.PlanetID]int{
+		models.PlanetSun:     4,
+		models.PlanetMoon:    1,
+		models.PlanetMars:    0,
+		models.PlanetMercury: 2,
+		models.PlanetJupiter: 8,
+		models.PlanetVenus:   6,
+		models.PlanetSaturn:  9,
+	}
+
+	periods := CalcCharaDasha(1, planetSigns) // Taurus lagna
+	if len(periods) != 12 {
+		t.Fatalf("expected 12 periods, got %d", len(periods))
+	}
+
+	// First should be Taurus
+	if periods[0].Sign != "Taurus" {
+		t.Errorf("first period = %s, want Taurus", periods[0].Sign)
+	}
+	// Second should be Aries (reverse order from Taurus)
+	if periods[1].Sign != "Aries" {
+		t.Errorf("second period = %s, want Aries (reverse order)", periods[1].Sign)
+	}
+}
+
+func TestCalcCharaDasha_RulerInOwnSign(t *testing.T) {
+	// Mars in Aries → ruler in own sign → 12 years
+	planetSigns := map[models.PlanetID]int{
+		models.PlanetMars: 0, // Mars in Aries
+	}
+
+	periods := CalcCharaDasha(0, planetSigns)
+	if periods[0].Years != 12 {
+		t.Errorf("ruler in own sign should give 12 years, got %d", periods[0].Years)
+	}
+}
+

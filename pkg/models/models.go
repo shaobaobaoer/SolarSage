@@ -58,6 +58,7 @@ const (
 	HouseTopocentric   HouseSystem = "TOPOCENTRIC"
 	HouseAlcabitius    HouseSystem = "ALCABITIUS"
 	HouseMeridian      HouseSystem = "MERIDIAN"
+	HouseSripati       HouseSystem = "SRIPATI"
 )
 
 // CalendarType represents calendar type

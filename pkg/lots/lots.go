@@ -28,6 +28,7 @@ type lotDef struct {
 
 // standardLots defines the most commonly used Arabic lots
 var standardLots = []lotDef{
+	// --- Classical Hellenistic Lots (Valens / Paulus tradition) ---
 	{Name: "Lot of Fortune", DayBodyA: "MOON", DayBodyB: "SUN", Reverses: true},
 	{Name: "Lot of Spirit", DayBodyA: "SUN", DayBodyB: "MOON", Reverses: true},
 	{Name: "Lot of Eros", DayBodyA: "VENUS", DayBodyB: "SPIRIT", Reverses: true},
@@ -43,6 +44,30 @@ var standardLots = []lotDef{
 	{Name: "Lot of Siblings", DayBodyA: "SATURN", DayBodyB: "MERCURY", Reverses: true},
 	{Name: "Lot of Disease", DayBodyA: "MARS", DayBodyB: "SATURN", Reverses: true},
 	{Name: "Lot of Death", DayBodyA: "SATURN", DayBodyB: "MOON", NightBodyA: "MOON", NightBodyB: "SATURN", Reverses: false},
+
+	// --- Medieval Arabic Lots (additional, widely used in traditional practice) ---
+	// Source: Abu Ma'shar, al-Qabisi, Bonatti; day/night reversal per standard conventions.
+
+	// Part of Real Estate / Immovable Property: ASC + Saturn - Sun (day); reversed at night
+	{Name: "Part of Real Estate", DayBodyA: "SATURN", DayBodyB: "SUN", Reverses: true},
+
+	// Part of Commerce / Trade: ASC + Mercury - Sun (day); reversed at night
+	{Name: "Part of Commerce", DayBodyA: "MERCURY", DayBodyB: "SUN", Reverses: true},
+
+	// Part of Travel (by land): ASC + Saturn - Moon (day); reversed at night
+	{Name: "Part of Travel", DayBodyA: "SATURN", DayBodyB: "MOON", Reverses: true},
+
+	// Part of Faith / Religion: ASC + Mercury - Moon (day); reversed at night
+	{Name: "Part of Faith", DayBodyA: "MERCURY", DayBodyB: "MOON", Reverses: true},
+
+	// Part of Sudden Advancement / Kingship: ASC + Fortune - Spirit (day); reversed at night
+	{Name: "Part of Sudden Advancement", DayBodyA: "FORTUNE", DayBodyB: "SPIRIT", Reverses: true},
+
+	// Part of Imprisonment / Sorrow: ASC + Saturn - Mercury (day); reversed at night
+	{Name: "Part of Imprisonment", DayBodyA: "SATURN", DayBodyB: "MERCURY", Reverses: true},
+
+	// Part of Fame / Honor: ASC + Jupiter - Sun (day); reversed at night
+	{Name: "Part of Fame", DayBodyA: "JUPITER", DayBodyB: "SUN", Reverses: true},
 }
 
 // CalcStandardLots computes all standard Arabic lots for a chart
