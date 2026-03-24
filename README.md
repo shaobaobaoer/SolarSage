@@ -15,6 +15,7 @@ Independently validated at **100% accuracy** (247/247 transit events against Sol
 ## Table of Contents
 
 - [Why SolarSage?](#why-solarsage)
+- [Related Projects](#related-projects)
 - [Features](#features)
 - [Quick Start](#quick-start)
   - [Prerequisites & Build](#prerequisites--build)
@@ -30,6 +31,19 @@ Independently validated at **100% accuracy** (247/247 transit events against Sol
 - [Docker](#docker)
 - [Contributing](#contributing)
 - [License](#license)
+
+---
+
+## Related Projects
+
+| Project | Description | Link |
+|---------|-------------|------|
+| **SolarSage** | This repository - Core calculation engine (MCP + REST API) | [GitHub](https://github.com/shaobaobaoer/solarsage-mcp) |
+| **SolarSageDataService** | Standalone data service for astrology dataset (HTTP API + Go package) | [GitHub](../SolarSageDataService/) |
+
+SolarSage focuses on **astrological calculations** while SolarSageDataService provides **access to historical data** (national charts, person birth data, eclipses, etc.). They can be used independently or together.
+
+> **Note**: The dataset functionality has been moved to [SolarSageDataService](../SolarSageDataService/). This repository now contains only the core calculation engine.
 
 ---
 
@@ -514,6 +528,8 @@ Most chart endpoints accept an optional `orb_config` parameter for customizing a
 | `POST /api/v1/lunar/phases` | Lunar phase list |
 | `POST /api/v1/lunar/eclipses` | Eclipse finder |
 | `POST /api/v1/report/natal` | Comprehensive natal report |
+
+**Note**: Dataset endpoints (`/api/v1/dataset/*`) have been moved to [SolarSageDataService](../SolarSageDataService/).
 
 ---
 

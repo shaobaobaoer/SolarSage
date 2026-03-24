@@ -869,6 +869,8 @@ func (s *Server) handleToolsList(req *jsonRPCRequest) *jsonRPCResponse {
 		},
 	)
 
+
+
 	return &jsonRPCResponse{
 		JSONRPC: "2.0",
 		ID:      req.ID,
