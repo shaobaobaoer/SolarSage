@@ -1,0 +1,608 @@
+=== Running Test Case 1: JN - Male Chart ===
+=== Natal Chart Verification ===
+ASC: 96.5299 (6°31'47"Can) [expected: 96.530]
+MC:  351.5003 (21°30'00"Pis) [expected: 351.500]
+ASC/MC verification: OK
+
+Planet positions:
+  SUN                  266.4997  26°29'59"Sag  House 6
+  MOON                 138.1164  18°06'59"Leo  House 2
+  MERCURY              263.9333  23°56'00"Sag  House 6 (Rx)
+  VENUS                302.5527  2°33'09"Aqu  House 8
+  MARS                 300.0973  0°05'50"Aqu  House 8
+  JUPITER              319.5479  19°32'52"Aqu  House 8
+  SATURN                13.5378  13°32'15"Ari  House 10
+  URANUS               306.4248  6°25'29"Aqu  House 8
+  NEPTUNE              298.4675  28°28'03"Cap  House 7
+  PLUTO                246.2742  6°16'27"Sag  House 6
+  CHIRON               224.0227  14°01'21"Sco  House 5
+  NORTH_NODE_MEAN      164.4461  14°26'45"Vir  House 3 (Rx)
+
+Transit period: JD 2461072.166667 to 2461438.166655
+
+=== Running Transit Calculation (outer planets) ===
+Running Moon transit events...
+Generated 1158 events (outer: 836, moon sig+voc: 322)
+  ASPECT_EXACT: 249
+  VOID_OF_COURSE: 161
+  SIGN_INGRESS: 169
+  ASPECT_ENTER: 255
+  HOUSE_INGRESS: 7
+  ASPECT_LEAVE: 253
+  STATION: 12
+  ASPECT_BEGIN: 52
+
+=== Comparison with Solar Fire ===
+Solar Fire events: 1156 (from 1 files)
+Computed events:   1158
+
+Solar Fire event types:
+  Retrograde: 6
+  Exact: 247
+  Enter: 255
+  Void: 161
+  SignIngress: 169
+  Leave: 253
+  Direct: 6
+  HouseChange: 7
+  Begin: 52
+
+Solar Fire chart types:
+  Tr-Sp: 231
+  Sa-Na: 31
+  Tr-Na: 200
+  Sp-Na: 52
+  Sp-Sp: 25
+  Tr-Tr: 394
+  Tr: 12
+  Tr-Sa: 211
+
+Computed event types:
+  Begin: 52
+  Exact: 249
+  SignIngress: 169
+  Enter: 255
+  HouseIngress: 7
+  Void: 161
+  Leave: 253
+  Direct: 6
+  Retrograde: 6
+
+Computed chart types:
+  Tr-Sa: 212
+  Tr-Sp: 232
+  Sp-Na: 52
+  Tr-Na: 200
+  Sa-Na: 31
+  Sp-Sp: 25
+  Tr-Tr: 394
+  Tr: 12
+
+=== Event Matching (Exact events only) ===
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+  SF unmatched: 2026-02-01 01:17:24 Uranus Square Moon Tr-Sp
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+  SF unmatched: 2026-02-06 02:51:40 Jupiter Trine Chiron Tr-Sp
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+  SF unmatched: 2026-02-06 18:21:05 Jupiter Sextile Moon Tr-Sa
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+  SF unmatched: 2026-02-07 12:23:04 Saturn Trine ASC Tr-Sp
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+  SF unmatched: 2026-02-08 01:14:21 NorthNode Semi-Square Sun Tr-Sp
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+  SF unmatched: 2026-02-08 01:14:21 NorthNode Semi-Square Sun Tr-Sa
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+  SF unmatched: 2026-02-09 14:01:43 Saturn Sextile Neptune Tr-Sp
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+  SF unmatched: 2026-02-12 17:12:45 Jupiter Sesquiquadrate Venus Tr-Sa
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+  SF unmatched: 2026-02-15 05:20:41 Saturn Sextile Mars Tr-Na
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+  SF unmatched: 2026-02-21 00:53:51 Saturn Conjunction Neptune Tr-Tr
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+  SF unmatched: 2026-02-26 22:07:50 Chiron Trine Mercury Tr-Na
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+  SF unmatched: 2026-03-01 08:38:37 Chiron Semi-Square NorthNode Tr-Tr
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+  SF unmatched: 2026-03-02 10:41:18 Saturn Sesquiquadrate Chiron Tr-Sp
+DEBUG: Event Sp-Na using tolerance 2700 seconds
+  SF unmatched: 2026-03-03 01:26:19 Moon Quincunx Neptune Sp-Na
+DEBUG: Event Sp-Na using tolerance 2700 seconds
+  SF unmatched: 2026-03-05 03:54:37 Moon Sesquiquadrate Saturn Sp-Na
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+  SF unmatched: 2026-03-08 04:53:55 Saturn Sextile Venus Tr-Na
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+  SF unmatched: 2026-03-12 19:11:58 Saturn Sesquiquadrate Moon Tr-Na
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+  SF unmatched: 2026-03-18 08:54:58 Saturn Square Mercury Tr-Sp
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+  SF unmatched: 2026-03-18 18:58:07 Uranus Sesquiquadrate NorthNode Tr-Sa
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+  SF unmatched: 2026-03-23 06:30:46 Neptune Sesquiquadrate Chiron Tr-Sp
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+  SF unmatched: 2026-03-24 07:37:48 Saturn Semi-Square Jupiter Tr-Na
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+  SF unmatched: 2026-03-25 05:53:23 Uranus Trine Neptune Tr-Na
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+  MATCH #1: SF 2026-03-25 07:19:29 Chiron Square Sun Tr-Sa | Computed 2026-03-25 07:04:29 Square
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+  MATCH #2: SF 2026-03-25 07:19:29 Chiron Square Sun Tr-Sp | Computed 2026-03-25 07:04:29 Square
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+  SF unmatched: 2026-03-26 02:08:41 NorthNode Semi-Square Mercury Tr-Sa
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+  SF unmatched: 2026-03-27 00:14:20 Uranus Semi-Square Saturn Tr-Na
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+  SF unmatched: 2026-03-27 11:34:30 Chiron Sextile Jupiter Tr-Sp
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+  SF unmatched: 2026-03-28 14:37:05 Saturn Square Pluto Tr-Sa
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+  SF unmatched: 2026-03-29 06:10:54 Saturn Sextile Pluto Tr-Tr
+DEBUG: Event Sp-Sp using tolerance 2700 seconds
+  SF unmatched: 2026-03-29 19:38:48 Moon Sesquiquadrate Saturn Sp-Sp
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+  SF unmatched: 2026-03-30 16:51:43 Saturn Trine ASC Tr-Sa
+DEBUG: Event Sp-Sp using tolerance 2700 seconds
+  SF unmatched: 2026-04-02 17:29:56 Moon Quincunx Neptune Sp-Sp
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+  MATCH #3: SF 2026-04-13 16:37:54 Pluto Opposition ASC Tr-Sa | Computed 2026-04-13 16:21:54 Opposition
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+  MATCH #4: SF 2026-04-17 20:47:55 NorthNode Trine ASC Tr-Na | Computed 2026-04-17 20:33:55 Trine
+DEBUG: Event Sp-Na using tolerance 2700 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Sp-Na using tolerance 2700 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Sp-Sp using tolerance 2700 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Sp-Na using tolerance 2700 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Sa-Na using tolerance 2700 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Sp-Sp using tolerance 2700 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Sp-Na using tolerance 2700 seconds
+DEBUG: Event Sp-Sp using tolerance 2700 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Sp-Na using tolerance 2700 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Sp-Na using tolerance 2700 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Sp-Na using tolerance 2700 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+  MATCH #5: SF 2026-11-02 09:30:02 Uranus Quincunx Mercury Tr-Sp | Computed 2026-11-02 09:59:02 Quincunx
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Sa-Na using tolerance 2700 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Sa-Na using tolerance 2700 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Sp-Sp using tolerance 2700 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Sa-Na using tolerance 2700 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Sp-Sp using tolerance 2700 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Sp-Sp using tolerance 2700 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Sp using tolerance 2100 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Tr using tolerance 1500 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Na using tolerance 1200 seconds
+DEBUG: Event Tr-Sa using tolerance 1800 seconds
+
+SF Exact events: 247, Matched: 5, Unmatched: 242
+  Extra computed #1: 2026-05-08 23:14:44 Chiron NorthNode Sesquiquadrate Tr-Sp
+  Extra computed #2: 2026-05-16 16:22:30 Jupiter Pluto Sesquiquadrate Tr-Na
+  Extra computed #3: 2026-06-08 19:24:57 Jupiter Sun Opposition Tr-Sa
+  Extra computed #4: 2026-09-04 14:36:00 Jupiter Saturn Trine Tr-Sp
+  Extra computed #5: 2026-09-05 00:02:46 Uranus Uranus Square Tr-Sa
+  Extra computed #6: 2026-11-17 11:30:07 Jupiter Sun Quincunx Tr-Sp
+  Extra computed #7: 2026-12-15 10:32:07 Chiron Sun Trine Tr-Na
+  Extra computed #8: 2026-08-31 13:31:22 Jupiter Saturn Trine Tr-Na
+  Extra computed #9: 2026-10-28 22:13:35 Moon Uranus Quincunx Sp-Na
+  Extra computed #10: 2026-07-03 23:21:10 Moon Venus Quincunx Sp-Na
+  Extra computed #11: 2026-07-08 01:32:22 NorthNode Saturn Opposition Sa-Na
+  Extra computed #12: 2026-10-07 05:12:46 Jupiter Pluto Sesquiquadrate Tr-Sa
+  Extra computed #13: 2026-12-06 22:53:47 Chiron Saturn Trine Sa-Na
+  Extra computed #14: 2026-06-18 01:15:49 NorthNode Saturn Opposition Tr-Sa
+  Extra computed #15: 2026-05-12 19:16:11 NorthNode Pluto Sextile Tr-Sa
+  Extra computed #16: 2026-08-27 22:37:13 Jupiter Saturn Square Tr-Sa
+  Extra computed #17: 2026-05-10 18:38:23 Jupiter NorthNode Sesquiquadrate Tr-Tr
+  Extra computed #18: 2026-07-16 04:35:49 Neptune Uranus Sextile Tr-Tr
+  Extra computed #19: 2026-07-20 02:18:10 Jupiter Mercury Quincunx Tr-Sp
+  Extra computed #20: 2026-07-26 00:47:56 Jupiter Uranus Quincunx Tr-Sa
+  Extra computed #21: 2026-07-26 12:19:57 ASC Jupiter Conjunction Tr-Sa
+  Extra computed #22: 2026-10-02 08:38:25 Chiron NorthNode Sesquiquadrate Tr-Na
+  Extra computed #23: 2026-07-08 05:58:42 NorthNode Saturn Quincunx Tr-Na
+  Extra computed #24: 2026-08-30 20:05:34 NorthNode Saturn Semi-Square Tr-Sp
+  Extra computed #25: 2026-10-12 12:29:07 Jupiter MC Quincunx Tr-Na
+  Extra computed #26: 2026-12-13 17:53:46 Moon Saturn Quincunx Tr-Sp
+  Extra computed #27: 2026-03-29 06:10:59 Pluto Saturn Sextile Tr-Tr
+  Extra computed #28: 2026-05-08 05:11:04 ASC NorthNode Quincunx Tr-Sa
+  Extra computed #29: 2026-07-02 17:57:12 Moon NorthNode Opposition Tr-Sp
+  Extra computed #30: 2026-10-12 16:53:45 ASC Jupiter Semi-Square Tr-Na
+  Extra computed #31: 2026-03-26 02:24:55 Mercury NorthNode Semi-Square Tr-Sa
+  Extra computed #32: 2026-07-30 05:59:28 Jupiter MC Sesquiquadrate Tr-Na
+  Extra computed #33: 2026-09-01 07:05:33 Jupiter NorthNode Sextile Tr-Sa
+  Extra computed #34: 2026-09-30 20:44:11 Chiron Neptune Square Tr-Sp
+  Extra computed #35: 2027-01-14 17:44:32 Moon Saturn Quincunx Tr-Sp
+  Extra computed #36: 2026-04-15 00:17:59 Pluto Saturn Trine Tr-Sp
+  Extra computed #37: 2026-02-08 01:29:57 NorthNode Sun Semi-Square Tr-Sp
+  Extra computed #38: 2026-03-25 05:53:26 Neptune Uranus Trine Tr-Na
+  Extra computed #39: 2026-04-08 09:57:52 Saturn Uranus Sextile Tr-Na
+  Extra computed #40: 2026-04-20 22:29:59 Saturn Uranus Sextile Tr-Sp
+  Extra computed #41: 2026-05-22 06:43:20 Jupiter Pluto Sesquiquadrate Tr-Sp
+  Extra computed #42: 2026-07-25 13:26:37 Neptune Pluto Sextile Tr-Tr
+  Extra computed #43: 2026-11-20 19:41:52 Jupiter Venus Quincunx Tr-Sp
+  Extra computed #44: 2026-02-09 14:01:29 Neptune Saturn Sextile Tr-Sp
+  Extra computed #45: 2026-08-15 03:03:22 NorthNode Saturn Quincunx Tr-Na
+  Extra computed #46: 2026-11-01 03:13:28 Jupiter Saturn Sesquiquadrate Tr-Tr
+  Extra computed #47: 2026-11-08 16:25:26 Moon Venus Sesquiquadrate Sa-Na
+  Extra computed #48: 2027-01-06 08:35:31 Jupiter Sun Quincunx Tr-Sp
+  Extra computed #49: 2027-01-29 01:40:17 Chiron Sun Trine Tr-Na
+  Extra computed #50: 2026-06-02 09:14:17 Mercury Neptune Square Tr-Sp
+  Extra computed #51: 2026-09-27 08:15:05 Jupiter Jupiter Quincunx Tr-Sa
+  Extra computed #52: 2026-12-02 13:21:33 Chiron Jupiter Trine Tr-Tr
+  Extra computed #53: 2026-02-01 06:03:14 Moon Uranus Square Tr-Sp
+  Extra computed #54: 2026-02-12 17:23:00 Jupiter Venus Sesquiquadrate Tr-Sa
+  Extra computed #55: 2026-02-15 05:20:50 Mars Saturn Sextile Tr-Na
+  Extra computed #56: 2026-06-18 22:47:14 Saturn Saturn Conjunction Tr-Na
+  Extra computed #57: 2026-06-13 18:34:14 Jupiter Sun Quincunx Tr-Na
+  Extra computed #58: 2026-04-15 23:59:41 Chiron Venus Square Tr-Sp
+  Extra computed #59: 2026-05-11 00:29:01 Jupiter Uranus Sesquiquadrate Tr-Sa
+  Extra computed #60: 2026-06-03 01:43:23 Mercury NorthNode Sextile Tr-Sp
+  Extra computed #61: 2026-07-10 19:47:54 Jupiter Moon Semi-Square Tr-Sa
+  Extra computed #62: 2026-07-18 12:43:22 Pluto Uranus Trine Tr-Tr
+  Extra computed #63: 2026-09-07 21:18:12 Chiron Saturn Trine Tr-Sa
+  Extra computed #64: 2026-07-12 05:08:26 Mercury Uranus Quincunx Tr-Sp
+  Extra computed #65: 2026-09-16 10:08:50 Neptune Pluto Sextile Tr-Tr
+  Extra computed #66: 2026-11-05 07:19:05 Chiron Neptune Sextile Tr-Sa
+  Extra computed #67: 2026-11-11 18:15:53 Chiron Neptune Semi-Square Sa-Na
+  Extra computed #68: 2026-08-16 20:32:22 Moon Neptune Quincunx Tr-Sp
+  Extra computed #69: 2026-11-22 21:19:58 Moon Pluto Square Sp-Sp
+  Extra computed #70: 2026-12-04 04:03:14 Saturn Uranus Sextile Tr-Sp
+  Extra computed #71: 2026-06-28 05:33:46 Jupiter Neptune Opposition Tr-Sp
+  Extra computed #72: 2026-04-04 15:08:05 NorthNode Pluto Square Tr-Sp
+  Extra computed #73: 2026-05-11 12:08:52 Jupiter MC Square Tr-Sa
+  Extra computed #74: 2026-06-21 10:08:37 Chiron Jupiter Sesquiquadrate Tr-Sa
+  Extra computed #75: 2026-08-22 00:19:48 Jupiter Sun Sesquiquadrate Tr-Na
+  Extra computed #76: 2026-10-14 12:22:40 Jupiter Saturn Semi-Square Tr-Sp
+  Extra computed #77: 2026-10-24 08:46:10 Moon Pluto Square Sp-Na
+  Extra computed #78: 2026-04-27 20:17:20 Jupiter Jupiter Trine Tr-Sa
+  Extra computed #79: 2026-06-20 15:51:41 NorthNode Uranus Square Tr-Tr
+  Extra computed #80: 2027-01-05 21:33:00 Jupiter Venus Quincunx Tr-Sp
+  Extra computed #81: 2027-01-15 09:25:40 Chiron Neptune Sesquiquadrate Tr-Sp
+  Extra computed #82: 2026-05-31 14:53:26 Jupiter Mercury Quincunx Tr-Na
+  Extra computed #83: 2026-07-25 08:15:52 Jupiter Pluto Quincunx Tr-Sa
+  Extra computed #84: 2026-08-05 20:12:01 Jupiter Uranus Opposition Tr-Sp
+  Extra computed #85: 2027-01-04 00:29:27 Chiron Jupiter Trine Tr-Tr
+  Extra computed #86: 2026-11-10 05:27:33 Chiron Neptune Sesquiquadrate Tr-Sp
+  Extra computed #87: 2026-06-09 20:25:54 Uranus Venus Trine Tr-Na
+  Extra computed #88: 2026-07-29 21:48:30 Jupiter Uranus Opposition Tr-Na
+  Extra computed #89: 2026-09-22 03:42:17 Moon Neptune Sesquiquadrate Tr-Na
+  Extra computed #90: 2026-10-24 21:59:39 Chiron Chiron Sesquiquadrate Tr-Sa
+  Extra computed #91: 2026-04-26 21:52:44 Moon Neptune Sesquiquadrate Tr-Na
+  Extra computed #92: 2026-08-24 18:40:30 ASC NorthNode Quincunx Tr-Sp
+  Extra computed #93: 2026-09-29 20:47:38 Neptune NorthNode Conjunction Tr-Sa
+  Extra computed #94: 2026-06-26 14:44:29 Jupiter Mars Quincunx Tr-Sa
+  Extra computed #95: 2026-08-13 12:01:58 Moon Pluto Quincunx Tr-Sp
+  Extra computed #96: 2027-01-13 21:07:30 Sun Venus Conjunction Sp-Sp
+  Extra computed #97: 2026-05-18 07:58:46 Chiron Neptune Square Tr-Na
+  Extra computed #98: 2026-11-04 19:12:14 Chiron NorthNode Sesquiquadrate Tr-Sp
+  Extra computed #99: 2026-02-06 18:28:12 Jupiter Moon Sextile Tr-Sa
+  Extra computed #100: 2026-06-27 23:28:55 Jupiter NorthNode Semi-Square Tr-Na
+  Extra computed #101: 2026-07-20 15:23:29 Jupiter Neptune Trine Tr-Tr
+  Extra computed #102: 2026-10-23 20:26:20 Chiron Neptune Square Tr-Na
+  Extra computed #103: 2026-10-29 05:13:37 Jupiter Mercury Trine Tr-Na
+  Extra computed #104: 2026-08-19 17:31:37 Pluto Uranus Quincunx Tr-Sa
+  Extra computed #105: 2026-06-07 23:05:19 Chiron Neptune Square Tr-Sp
+  Extra computed #106: 2026-03-24 07:37:53 Jupiter Saturn Semi-Square Tr-Na
+  Extra computed #107: 2026-06-06 19:31:34 Chiron NorthNode Sesquiquadrate Tr-Na
+  Extra computed #108: 2026-06-08 19:24:57 Jupiter Sun Opposition Tr-Sp
+  Extra computed #109: 2026-07-06 03:14:38 Saturn Saturn Conjunction Tr-Sp
+  Extra computed #110: 2026-08-02 14:10:10 Jupiter Pluto Trine Tr-Sp
+  Extra computed #111: 2026-08-17 01:51:35 Saturn Saturn Conjunction Tr-Sp
+  Extra computed #112: 2026-09-15 15:33:30 Chiron Mars Square Tr-Na
+  Extra computed #113: 2027-01-06 08:35:31 Jupiter Sun Quincunx Tr-Sa
+  Extra computed #114: 2026-09-23 04:24:02 Jupiter Neptune Sesquiquadrate Tr-Tr
+  Extra computed #115: 2026-09-23 08:00:17 Jupiter Moon Conjunction Tr-Na
+  Extra computed #116: 2026-10-02 17:21:55 Chiron Mars Sextile Tr-Sa
+  Extra computed #117: 2027-01-12 06:55:43 Jupiter Jupiter Opposition Tr-Sp
+  Extra computed #118: 2026-03-03 06:37:06 Moon Neptune Quincunx Sp-Na
+  Extra computed #119: 2026-04-05 01:40:36 Mars Uranus Square Tr-Sa
+  Extra computed #120: 2026-05-05 17:47:10 Jupiter Jupiter Quincunx Tr-Na
+  Extra computed #121: 2026-05-22 22:05:23 Uranus Venus Square Tr-Sa
+  Extra computed #122: 2026-08-19 03:18:40 Mars Saturn Semi-Square Tr-Sa
+  Extra computed #123: 2026-09-15 18:28:23 Neptune Saturn Semi-Square Tr-Sa
+  Extra computed #124: 2027-01-30 09:19:56 Jupiter Mercury Quincunx Tr-Sa
+  Extra computed #125: 2026-05-08 08:48:12 Moon Uranus Square Tr-Sp
+  Extra computed #126: 2026-06-08 14:29:10 Jupiter Jupiter Quincunx Tr-Sp
+  Extra computed #127: 2026-07-17 10:20:14 Jupiter Jupiter Sesquiquadrate Tr-Sa
+  Extra computed #128: 2026-09-01 03:27:16 NorthNode Saturn Opposition Tr-Sa
+  Extra computed #129: 2026-12-23 21:57:33 Jupiter Pluto Semi-Square Tr-Sa
+  Extra computed #130: 2026-07-01 00:47:17 Jupiter Mars Opposition Tr-Na
+  Extra computed #131: 2026-07-12 08:45:55 Jupiter Venus Opposition Tr-Na
+  Extra computed #132: 2026-08-30 06:13:30 Chiron Jupiter Trine Tr-Sa
+  Extra computed #133: 2026-09-24 11:02:50 ASC Chiron Square Tr-Sp
+  Extra computed #134: 2026-09-30 22:12:16 Jupiter Mercury Sesquiquadrate Tr-Sp
+  Extra computed #135: 2027-01-27 16:51:37 Jupiter Mercury Trine Tr-Na
+  Extra computed #136: 2026-06-23 08:06:05 Jupiter Neptune Opposition Tr-Na
+  Extra computed #137: 2026-06-30 22:11:55 Mars Saturn Semi-Square Tr-Sa
+  Extra computed #138: 2026-04-16 18:13:53 Neptune Uranus Trine Tr-Sp
+  Extra computed #139: 2026-02-06 02:52:23 Chiron Jupiter Trine Tr-Sp
+  Extra computed #140: 2026-02-07 12:38:18 ASC Saturn Trine Tr-Sp
+  Extra computed #141: 2026-03-08 04:54:00 Saturn Venus Sextile Tr-Na
+  Extra computed #142: 2026-05-10 02:26:12 NorthNode Uranus Conjunction Tr-Sa
+  Extra computed #143: 2026-05-30 02:31:11 Chiron Mars Sextile Tr-Sa
+  Extra computed #144: 2026-06-10 02:25:41 NorthNode Saturn Quincunx Tr-Sp
+  Extra computed #145: 2026-06-18 16:53:33 Jupiter Neptune Quincunx Tr-Sa
+  Extra computed #146: 2026-08-19 20:15:49 Jupiter Pluto Semi-Square Tr-Sa
+  Extra computed #147: 2026-10-01 02:10:58 Jupiter Jupiter Opposition Tr-Na
+  Extra computed #148: 2026-04-16 04:10:26 Mars Saturn Semi-Square Tr-Sp
+  Extra computed #149: 2026-03-30 16:50:41 ASC Saturn Trine Tr-Sa
+  Extra computed #150: 2026-04-09 08:34:03 Jupiter Venus Sesquiquadrate Tr-Sa
+  Extra computed #151: 2026-04-10 17:44:16 Neptune Venus Sextile Tr-Na
+  Extra computed #152: 2026-09-15 19:13:41 NorthNode Saturn Semi-Square Tr-Na
+  Extra computed #153: 2026-11-29 19:23:05 Pluto Uranus Trine Tr-Tr
+  Extra computed #154: 2026-02-08 01:29:57 NorthNode Sun Semi-Square Tr-Sa
+  Extra computed #155: 2026-05-11 12:08:52 Jupiter MC Square Tr-Sp
+  Extra computed #156: 2026-07-10 08:09:52 Jupiter NorthNode Quincunx Tr-Tr
+  Extra computed #157: 2026-07-20 22:44:41 Jupiter Pluto Opposition Tr-Tr
+  Extra computed #158: 2026-12-24 15:49:35 Uranus Venus Trine Tr-Na
+  Extra computed #159: 2026-12-30 17:01:32 Mars NorthNode Conjunction Tr-Sp
+  Extra computed #160: 2026-12-31 08:41:33 Jupiter Sun Trine Tr-Na
+  Extra computed #161: 2026-07-29 20:55:32 Mercury Neptune Square Tr-Sp
+  Extra computed #162: 2026-09-12 07:34:16 NorthNode NorthNode Sesquiquadrate Tr-Sa
+  Extra computed #163: 2027-01-22 18:01:21 Jupiter Saturn Sesquiquadrate Tr-Tr
+  Extra computed #164: 2026-04-07 04:39:01 Pluto Saturn Trine Tr-Na
+  Extra computed #165: 2026-10-08 13:48:16 Jupiter MC Trine Tr-Sp
+  Extra computed #166: 2026-11-12 04:30:18 Jupiter NorthNode Opposition Tr-Tr
+  Extra computed #167: 2027-01-15 17:26:23 Neptune Uranus Sextile Tr-Tr
+  Extra computed #168: 2027-01-26 03:46:12 ASC NorthNode Sesquiquadrate Tr-Na
+  Extra computed #169: 2026-04-28 03:35:28 Mars Uranus Trine Tr-Na
+  Extra computed #170: 2026-12-11 18:09:39 Mercury NorthNode Sextile Tr-Na
+  Extra computed #171: 2026-03-01 08:39:10 Chiron NorthNode Semi-Square Tr-Tr
+  Extra computed #172: 2026-05-26 01:03:35 Jupiter Mercury Opposition Tr-Sa
+  Extra computed #173: 2026-03-27 00:14:23 Saturn Uranus Semi-Square Tr-Na
+  Extra computed #174: 2026-04-14 04:34:02 Saturn Uranus Semi-Square Tr-Sp
+  Extra computed #175: 2026-08-31 15:11:56 Mars NorthNode Conjunction Tr-Sa
+  Extra computed #176: 2026-09-01 06:17:15 Jupiter Saturn Trine Tr-Tr
+  Extra computed #177: 2026-11-25 07:53:19 Jupiter Sun Trine Tr-Na
+  Extra computed #178: 2026-03-12 19:13:19 Moon Saturn Sesquiquadrate Tr-Na
+  Extra computed #179: 2026-03-30 00:50:44 Moon Saturn Sesquiquadrate Sp-Sp
+  Extra computed #180: 2026-04-14 08:58:38 Chiron Jupiter Trine Tr-Sp
+  Extra computed #181: 2026-04-14 15:33:32 Chiron Sun Trine Tr-Na
+  Extra computed #182: 2026-04-21 03:18:32 Mars Moon Quincunx Sp-Na
+  Extra computed #183: 2026-06-11 12:01:55 Chiron Saturn Trine Tr-Sa
+  Extra computed #184: 2026-06-13 16:28:22 Jupiter Venus Opposition Tr-Sp
+  Extra computed #185: 2026-03-23 06:29:28 Chiron Neptune Sesquiquadrate Tr-Sp
+  Extra computed #186: 2026-10-20 19:24:35 Jupiter Mars Opposition Tr-Sp
+  Extra computed #187: 2026-09-26 22:52:23 Pluto Uranus Quincunx Tr-Sa
+  Extra computed #188: 2026-06-22 22:15:14 Chiron Mars Square Tr-Na
+  Extra computed #189: 2026-08-28 14:21:45 Mercury Moon Trine Sp-Sp
+  Extra computed #190: 2026-09-13 07:52:08 NorthNode Saturn Quincunx Tr-Sp
+  Extra computed #191: 2026-11-10 22:32:28 Jupiter NorthNode Conjunction Tr-Sp
+  Extra computed #192: 2026-05-13 09:16:07 Jupiter Saturn Semi-Square Tr-Sp
+  Extra computed #193: 2026-09-17 00:55:23 Chiron Jupiter Square Tr-Sp
+  Extra computed #194: 2026-05-18 06:10:48 ASC Pluto Opposition Tr-Sa
+  Extra computed #195: 2026-05-21 23:34:20 ASC Neptune Opposition Sp-Sp
+  Extra computed #196: 2026-06-28 14:27:06 ASC Jupiter Conjunction Tr-Sp
+  Extra computed #197: 2026-07-02 10:23:36 Chiron Jupiter Square Tr-Tr
+  Extra computed #198: 2026-10-24 16:21:39 Jupiter Mercury Quincunx Tr-Sa
+  Extra computed #199: 2026-11-17 11:30:07 Jupiter Sun Quincunx Tr-Sa
+  Extra computed #200: 2026-03-02 10:40:56 Chiron Saturn Sesquiquadrate Tr-Sp
+  Extra computed #201: 2026-04-15 05:45:25 ASC Uranus Sextile Tr-Sp
+  Extra computed #202: 2026-05-23 12:22:57 Jupiter Mars Quincunx Tr-Sp
+  Extra computed #203: 2026-10-08 13:48:16 Jupiter MC Trine Tr-Sa
+  Extra computed #204: 2026-10-11 18:58:31 MC Moon Sesquiquadrate Sp-Sp
+  Extra computed #205: 2026-12-26 15:24:24 NorthNode Saturn Semi-Square Tr-Tr
+  Extra computed #206: 2026-03-18 18:31:02 NorthNode Uranus Sesquiquadrate Tr-Sa
+  Extra computed #207: 2026-04-09 06:27:24 ASC Saturn Square Tr-Na
+  Extra computed #208: 2026-04-29 01:27:42 Chiron Neptune Sextile Tr-Sa
+  Extra computed #209: 2026-11-01 02:36:13 ASC Moon Sextile Sp-Na
+  Extra computed #210: 2026-12-15 01:13:38 Moon Uranus Quincunx Sp-Sp
+  Extra computed #211: 2026-12-18 15:16:46 Saturn Uranus Sextile Tr-Sp
+  Extra computed #212: 2026-02-21 00:54:02 Neptune Saturn Conjunction Tr-Tr
+  Extra computed #213: 2026-06-03 23:35:35 Neptune Saturn Semi-Square Tr-Sa
+  Extra computed #214: 2026-09-03 19:22:58 Saturn Saturn Conjunction Tr-Na
+  Extra computed #215: 2026-10-09 02:25:59 Jupiter Mercury Semi-Square Sp-Na
+  Extra computed #216: 2026-03-05 09:05:28 Moon Saturn Sesquiquadrate Sp-Na
+  Extra computed #217: 2026-04-29 05:31:08 ASC NorthNode Semi-Square Sp-Na
+  Extra computed #218: 2026-07-29 05:28:20 Jupiter Pluto Trine Tr-Na
+  Extra computed #219: 2026-10-24 06:48:08 NorthNode Sun Sextile Tr-Na
+  Extra computed #220: 2026-02-26 22:08:32 Chiron Mercury Trine Tr-Na
+  Extra computed #221: 2026-05-08 17:57:27 MC NorthNode Semi-Square Tr-Sa
+  Extra computed #222: 2026-07-18 14:00:31 NorthNode Venus Conjunction Tr-Sa
+  Extra computed #223: 2026-09-11 02:27:15 Uranus Uranus Square Tr-Sa
+  Extra computed #224: 2026-04-02 22:41:59 Moon Neptune Quincunx Sp-Sp
+  Extra computed #225: 2026-04-15 10:31:40 Jupiter Moon Sextile Tr-Sa
+  Extra computed #226: 2026-07-21 19:10:23 Jupiter Uranus Sextile Tr-Tr
+  Extra computed #227: 2026-11-12 21:46:41 Jupiter Jupiter Opposition Tr-Sp
+  Extra computed #228: 2026-04-22 16:30:31 NorthNode Pluto Square Tr-Na
+  Extra computed #229: 2026-05-08 17:57:26 MC NorthNode Semi-Square Tr-Sp
+  Extra computed #230: 2026-05-18 00:37:35 Jupiter MC Trine Tr-Na
+  Extra computed #231: 2026-08-02 20:05:20 Chiron NorthNode Sextile Tr-Tr
+  Extra computed #232: 2027-01-06 12:26:45 Uranus Venus Square Tr-Sa
+  Extra computed #233: 2026-08-10 06:12:33 Jupiter Mercury Sesquiquadrate Tr-Na
+  Extra computed #234: 2026-10-01 14:08:54 Moon Uranus Square Tr-Sp
+  Extra computed #235: 2026-10-12 18:02:03 Neptune Venus Sextile Tr-Na
+  Extra computed #236: 2026-06-20 19:00:22 Jupiter NorthNode Semi-Square Tr-Sp
+  Extra computed #237: 2026-03-27 11:32:05 Chiron Jupiter Sextile Tr-Sp
+  Extra computed #238: 2026-03-18 08:45:46 Mercury Saturn Square Tr-Sp
+  Extra computed #239: 2026-03-28 14:29:57 Pluto Saturn Square Tr-Sa
+  Extra computed #240: 2026-05-09 00:52:10 Chiron Chiron Sesquiquadrate Tr-Sa
+  Extra computed #241: 2026-06-08 19:15:45 ASC Chiron Square Tr-Sp
+  Extra computed #242: 2026-07-08 04:54:27 Jupiter Venus Quincunx Tr-Sa
+Extra computed Exact events: 242

@@ -30,7 +30,9 @@ func TestChartPairType(t *testing.T) {
 	}{
 		{models.TransitEvent{EventType: models.EventStation, ChartType: models.ChartTransit}, "Tr"},
 		{models.TransitEvent{EventType: models.EventStation, ChartType: models.ChartProgressions}, "Sp"},
-		{models.TransitEvent{EventType: models.EventSignIngress, ChartType: models.ChartTransit}, "Tr-Tr"},
+		// Non-Moon transit SignIngress → Tr-Na; Moon transit SignIngress → Tr-Tr
+		{models.TransitEvent{EventType: models.EventSignIngress, ChartType: models.ChartTransit, Planet: models.PlanetMoon}, "Tr-Tr"},
+		{models.TransitEvent{EventType: models.EventSignIngress, ChartType: models.ChartTransit, Planet: models.PlanetSaturn}, "Tr-Na"},
 		{models.TransitEvent{EventType: models.EventSignIngress, ChartType: models.ChartProgressions}, "Sp-Na"},
 		{models.TransitEvent{EventType: models.EventVoidOfCourse, ChartType: models.ChartTransit}, "Tr-Tr"},
 		{models.TransitEvent{EventType: models.EventAspectExact, ChartType: models.ChartTransit, TargetChartType: models.ChartNatal}, "Tr-Na"},
@@ -137,8 +139,8 @@ func TestEventToCSVRow_HouseIngress(t *testing.T) {
 		ToHouse:         7,
 	}
 	row := EventToCSVRow(evt, "UTC")
-	if row.P2 != "House7" {
-		t.Errorf("HouseIngress P2 = %q, want House7", row.P2)
+	if row.P2 != "HouseCusp" {
+		t.Errorf("HouseIngress P2 = %q, want HouseCusp", row.P2)
 	}
 }
 

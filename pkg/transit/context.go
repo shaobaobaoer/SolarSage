@@ -65,10 +65,14 @@ func normalizeInput(input TransitCalcInput) TransitCalcInput {
 
 	// Map old fields to new structure
 	input.NatalChart = NatalChartConfig{
-		Lat:     input.NatalLat,
-		Lon:     input.NatalLon,
-		JD:      input.NatalJD,
-		Planets: input.NatalPlanets,
+		Lat:                       input.NatalLat,
+		Lon:                       input.NatalLon,
+		JD:                        input.NatalJD,
+		Planets:                   input.NatalPlanets,
+		ASCOverride:               input.NatalASC,
+		MCOverride:                input.NatalMC,
+		MCOverrideForASC:          input.NatalMCForASC,
+		ASCOverrideForProgressions: input.NatalASCForProgressions,
 	}
 
 	if input.SpecialPoints != nil {
@@ -158,7 +162,27 @@ func buildNatalRefs(input TransitCalcInput, natalHouses []float64) []NatalRef {
 
 	// Natal special points
 	for _, sp := range input.NatalChart.Points {
-		lon, err := chart.CalcSpecialPointLongitude(sp, input.NatalChart.Lat, input.NatalChart.Lon, input.NatalChart.JD, input.HouseSystem)
+		var lon float64
+		var err error
+
+		// Use override values for ASC/MC if provided
+		switch sp {
+		case models.PointASC:
+			if input.NatalChart.ASCOverride != 0 {
+				lon = input.NatalChart.ASCOverride
+			} else {
+				lon, err = chart.CalcSpecialPointLongitude(sp, input.NatalChart.Lat, input.NatalChart.Lon, input.NatalChart.JD, input.HouseSystem)
+			}
+		case models.PointMC:
+			if input.NatalChart.MCOverride != 0 {
+				lon = input.NatalChart.MCOverride
+			} else {
+				lon, err = chart.CalcSpecialPointLongitude(sp, input.NatalChart.Lat, input.NatalChart.Lon, input.NatalChart.JD, input.HouseSystem)
+			}
+		default:
+			lon, err = chart.CalcSpecialPointLongitude(sp, input.NatalChart.Lat, input.NatalChart.Lon, input.NatalChart.JD, input.HouseSystem)
+		}
+
 		if err != nil {
 			continue
 		}

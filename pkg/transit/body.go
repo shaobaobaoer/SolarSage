@@ -55,7 +55,7 @@ func buildTransitBodies(cfg *TransitChartConfig) []MovingBody {
 
 // buildProgressionBodies creates moving bodies for secondary progressions chart.
 // Returns nil if progressions config is nil.
-func buildProgressionBodies(cfg *ProgressionsChartConfig, natalJD float64) []MovingBody {
+func buildProgressionBodies(cfg *ProgressionsChartConfig, natalJD float64, natalMCOverrideForMC, natalMCOverrideForASC, natalASCOverride float64) []MovingBody {
 	if cfg == nil {
 		return nil
 	}
@@ -76,7 +76,7 @@ func buildProgressionBodies(cfg *ProgressionsChartConfig, natalJD float64) []Mov
 
 	// Add progressed special points
 	for _, sp := range cfg.Points {
-		calcFn := makeProgressionsSpecialPointCalcFn(sp, cfg.Lat, cfg.Lon, natalJD, cfg.HouseSystem)
+		calcFn := makeProgressionsSpecialPointCalcFn(sp, cfg.Lat, cfg.Lon, natalJD, cfg.HouseSystem, natalMCOverrideForMC, natalMCOverrideForASC, natalASCOverride)
 		bodies = append(bodies, MovingBody{
 			ID:            string(sp),
 			ChartType:     models.ChartProgressions,
@@ -91,11 +91,12 @@ func buildProgressionBodies(cfg *ProgressionsChartConfig, natalJD float64) []Mov
 
 // buildSolarArcBodies creates moving bodies for solar arc chart.
 // Returns nil if solar arc config is nil.
-func buildSolarArcBodies(cfg *SolarArcChartConfig, natalJD float64) []MovingBody {
+func buildSolarArcBodies(cfg *SolarArcChartConfig, natalChart NatalChartConfig) []MovingBody {
 	if cfg == nil {
 		return nil
 	}
 
+	natalJD := natalChart.JD
 	var bodies []MovingBody
 
 	// Add solar arc planets
@@ -112,7 +113,7 @@ func buildSolarArcBodies(cfg *SolarArcChartConfig, natalJD float64) []MovingBody
 
 	// Add solar arc special points
 	for _, sp := range cfg.Points {
-		calcFn := makeSolarArcSpecialPointCalcFn(sp, cfg.Lat, cfg.Lon, natalJD, cfg.HouseSystem)
+		calcFn := makeSolarArcSpecialPointCalcFn(sp, cfg.Lat, cfg.Lon, natalJD, cfg.HouseSystem, natalChart.ASCOverride, natalChart.MCOverride)
 		bodies = append(bodies, MovingBody{
 			ID:            string(sp),
 			ChartType:     models.ChartSolarArc,
@@ -164,9 +165,9 @@ func makeTransitSpecialPointCalcFn(sp models.SpecialPointID, lat, lon float64, h
 	}
 }
 
-func makeProgressionsSpecialPointCalcFn(sp models.SpecialPointID, lat, lon float64, natalJD float64, hsys models.HouseSystem) bodyCalcFunc {
+func makeProgressionsSpecialPointCalcFn(sp models.SpecialPointID, lat, lon float64, natalJD float64, hsys models.HouseSystem, natalMCOverrideForMC, natalMCOverrideForASC, natalASCOverride float64) bodyCalcFunc {
 	lonFn := func(jd float64) (float64, error) {
-		return progressions.CalcProgressedSpecialPoint(sp, natalJD, jd, lat, lon, hsys)
+		return progressions.CalcProgressedSpecialPoint(sp, natalJD, jd, lat, lon, hsys, natalMCOverrideForMC, natalMCOverrideForASC, natalASCOverride)
 	}
 	return func(jd float64) (float64, float64, error) {
 		spLon, err := lonFn(jd)
@@ -177,9 +178,27 @@ func makeProgressionsSpecialPointCalcFn(sp models.SpecialPointID, lat, lon float
 	}
 }
 
-func makeSolarArcSpecialPointCalcFn(sp models.SpecialPointID, lat, lon float64, natalJD float64, hsys models.HouseSystem) bodyCalcFunc {
+func makeSolarArcSpecialPointCalcFn(sp models.SpecialPointID, lat, lon float64, natalJD float64, hsys models.HouseSystem, ascOverride, mcOverride float64) bodyCalcFunc {
 	// Pre-compute natal special point longitude (fixed)
-	natalSpLon, _ := chart.CalcSpecialPointLongitude(sp, lat, lon, natalJD, hsys)
+	// Use override values for ASC/MC if provided
+	var natalSpLon float64
+	switch sp {
+	case models.PointASC:
+		if ascOverride != 0 {
+			natalSpLon = ascOverride
+		} else {
+			natalSpLon, _ = chart.CalcSpecialPointLongitude(sp, lat, lon, natalJD, hsys)
+		}
+	case models.PointMC:
+		if mcOverride != 0 {
+			natalSpLon = mcOverride
+		} else {
+			natalSpLon, _ = chart.CalcSpecialPointLongitude(sp, lat, lon, natalJD, hsys)
+		}
+	default:
+		natalSpLon, _ = chart.CalcSpecialPointLongitude(sp, lat, lon, natalJD, hsys)
+	}
+
 	return func(jd float64) (float64, float64, error) {
 		offset, err := progressions.SolarArcOffset(natalJD, jd)
 		if err != nil {

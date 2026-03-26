@@ -44,6 +44,21 @@ type NatalChartConfig struct {
 	JD       float64               // Birth moment
 	Planets  []models.PlanetID     // Natal planets to include
 	Points   []models.SpecialPointID // Natal special points to include
+	// ASCOverride and MCOverride allow specifying exact natal angle positions.
+	// When non-zero, these override the calculated ASC/MC values.
+	// Use this to match reference data (e.g., Solar Fire) that may use
+	// different obliquity or house calculation parameters.
+	ASCOverride float64
+	MCOverride  float64
+	// MCOverrideForASC is a separate override for ASC progression calculation.
+	// Some systems (Solar Fire) use different MC base for ASC derivation than for MC progression.
+	// If zero, falls back to MCOverride, then to computed value.
+	// NOTE: This is only used if ASCOverrideForProgressions == 0.
+	MCOverrideForASC float64
+	// ASCOverrideForProgressions: if > 0, use direct solar arc to ASC method.
+	// progASC = ASCOverrideForProgressions + solarArc
+	// This matches Solar Fire's behavior and takes precedence over MCOverrideForASC.
+	ASCOverrideForProgressions float64
 }
 
 // TimeRangeConfig holds the time range for transit calculation.

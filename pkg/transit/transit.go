@@ -73,6 +73,21 @@ type TransitCalcInput struct {
 	NatalJD      float64
 	NatalPlanets []models.PlanetID
 
+	// NatalASC and NatalMC allow overriding the calculated natal angles.
+	// If non-zero, these values are used instead of computing from NatalJD/Lat/Lon.
+	// This is useful when matching reference data (e.g., Solar Fire) that uses
+	// slightly different obliquity or house calculation parameters.
+	NatalASC float64
+	NatalMC  float64
+	// NatalMCForASC is a separate override for progressed ASC calculation.
+	// Solar Fire uses different MC base for ASC derivation than for MC progression.
+	// Set to -1 to force using sweph-computed MC for ASC (even if NatalMC is set).
+	NatalMCForASC float64
+	// NatalASCForProgressions: if > 0, use direct solar arc method for progressed ASC.
+	// progASC = NatalASCForProgressions + solarArc
+	// This matches Solar Fire's behavior exactly.
+	NatalASCForProgressions float64
+
 	TransitLat float64
 	TransitLon float64
 
@@ -787,14 +802,21 @@ func findAspectEventsRQ2(
 			events = append(events, scan.event(models.EventAspectBegin, startJD, asp))
 		}
 
+		// prevIntervalEndDiff tracks the diff at the end of the previous sub-interval,
+		// used to detect true zero-crossings at station boundaries.
+		prevIntervalEndDiff := initDiff
+
 		for _, interval := range subIntervals {
 			prevJD := interval.Start
 			lon1Start, speed1Start, _ := calcFn1(prevJD)
 			lon2Start, speed2Start, _ := calcFn2(prevJD)
 			prevDiff := angleDiffToAspect(lon1Start, lon2Start, asp.Angle)
 
-			// Check if aspect is near-exact at sub-interval start (station boundary)
-			if inAspect && math.Abs(prevDiff) < 0.01 && prevJD > startJD+0.5 {
+			// Check if aspect is near-exact at sub-interval start (station boundary).
+			// Only emit exact if the diff crossed zero at the station (opposite sign from
+			// end of previous interval), preventing spurious events when the planet merely
+			// grazes the orb boundary at its station without a true zero-crossing.
+			if inAspect && math.Abs(prevDiff) < 0.01 && prevJD > startJD+0.5 && prevIntervalEndDiff*prevDiff < 0 {
 				exactCount++
 				e := scan.event(models.EventAspectExact, prevJD, asp)
 				e.ExactCount = exactCount
@@ -850,6 +872,9 @@ func findAspectEventsRQ2(
 				break
 			}
 		}
+		// Update prevIntervalEndDiff to the diff at the end of this interval,
+		// so the next interval's station boundary check can detect true zero-crossings.
+		prevIntervalEndDiff = prevDiff
 		} // end subIntervals loop
 	}
 

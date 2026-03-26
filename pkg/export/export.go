@@ -50,12 +50,15 @@ func chartPairType(evt models.TransitEvent) string {
 	case models.EventStation:
 		return models.ChartTypeShort(evt.ChartType)
 	case models.EventSignIngress:
-		// Sign ingress: use chart type pair
-		ct := models.ChartTypeShort(evt.ChartType)
+		// Sign ingress: Moon transit → Tr-Tr; other transit planets → Tr-Na; others → Sp-Na etc.
 		switch evt.ChartType {
 		case models.ChartTransit:
-			return ct + "-" + ct
+			if evt.Planet == models.PlanetMoon {
+				return "Tr-Tr"
+			}
+			return "Tr-Na"
 		default:
+			ct := models.ChartTypeShort(evt.ChartType)
 			return ct + "-Na"
 		}
 	case models.EventVoidOfCourse:
@@ -127,13 +130,17 @@ func EventToCSVRow(evt models.TransitEvent, tz string) CSVRow {
 	case models.EventHouseIngress:
 		row.P1 = models.BodyDisplayName(string(evt.Planet))
 		row.P1House = evt.ToHouse
-		row.Aspect = "HouseIngress"
-		row.P2 = fmt.Sprintf("House%d", evt.ToHouse)
+		row.Aspect = "Conjunction"
+		row.P2 = "HouseCusp"
 		row.P2House = evt.ToHouse
-		row.EventType = "HouseIngress"
+		row.EventType = "HouseChange"
+		row.Type = models.ChartTypeShort(evt.ChartType) + "-Na"
 		row.Pos1Deg = models.FormatSignDegreeCSV(models.SignDegreeFromLongitude(evt.PlanetLongitude))
 		row.Pos1Sign = evt.PlanetSign
 		row.Pos1Dir = direction(evt.IsRetrograde)
+		row.Pos2Deg = models.FormatSignDegreeCSV(models.SignDegreeFromLongitude(evt.PlanetLongitude))
+		row.Pos2Sign = evt.PlanetSign
+		row.Pos2Dir = direction(evt.IsRetrograde)
 
 	default:
 		// Aspect events (Begin, Enter, Exact, Leave)

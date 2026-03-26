@@ -108,8 +108,8 @@ func buildTasks(ctx *CalcContext) []Task {
 
 	// Build moving bodies for each chart type
 	transitBodies := buildTransitBodies(input.Charts.Transit)
-	progressBodies := buildProgressionBodies(input.Charts.Progressions, input.NatalChart.JD)
-	solarArcBodies := buildSolarArcBodies(input.Charts.SolarArc, input.NatalChart.JD)
+	progressBodies := buildProgressionBodies(input.Charts.Progressions, input.NatalChart.JD, input.NatalChart.MCOverride, input.NatalChart.MCOverrideForASC, input.NatalChart.ASCOverrideForProgressions)
+	solarArcBodies := buildSolarArcBodies(input.Charts.SolarArc, input.NatalChart)
 
 	// Process Transit bodies
 	for _, trBody := range transitBodies {
@@ -233,8 +233,38 @@ func buildTasks(ctx *CalcContext) []Task {
 	return tasks
 }
 
-// shouldPairRQ2 returns true if body1 < body2 to avoid duplicate RQ2 pairs.
+// planetSFOrder defines the canonical SF ordering for Tr-Tr P1/P2 assignment.
+// Lower index = slower planet = P1 in Solar Fire output.
+var planetSFOrder = map[string]int{
+	string(models.PlanetJupiter):       1,
+	string(models.PlanetSaturn):        2,
+	string(models.PlanetUranus):        3,
+	string(models.PlanetNeptune):       4,
+	string(models.PlanetPluto):         5,
+	string(models.PlanetChiron):        6,
+	string(models.PlanetNorthNodeMean): 7,
+	string(models.PlanetMoon):          8,
+	string(models.PlanetSun):           9,
+	string(models.PlanetMercury):       10,
+	string(models.PlanetVenus):         11,
+	string(models.PlanetMars):          12,
+}
+
+// sfOrder returns the SF order index for a body ID (lower = P1).
+func sfOrder(id string) int {
+	if o, ok := planetSFOrder[id]; ok {
+		return o
+	}
+	return 99
+}
+
+// shouldPairRQ2 returns true if body1 should be P1 (comes first in SF order),
+// avoiding duplicate pairs.
 func shouldPairRQ2(id1, id2 string) bool {
+	o1, o2 := sfOrder(id1), sfOrder(id2)
+	if o1 != o2 {
+		return o1 < o2
+	}
 	return id1 < id2
 }
 

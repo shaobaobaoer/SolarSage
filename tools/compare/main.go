@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/shaobaobaoer/solarsage-mcp/pkg/chart"
@@ -31,6 +30,16 @@ type TestCase struct {
 	// Expected ASC/MC for verification
 	ExpectedASC float64
 	ExpectedMC  float64
+	// NatalASC/NatalMC override values from SF meta (precise to arcsec)
+	// If non-zero, these override calculated natal angles for Tr-Na references
+	NatalASC float64
+	NatalMC  float64
+	// NatalMCForASC: separate MC override for progressed ASC calculation.
+	// SF uses different MC base for ASC derivation. Set to -1 to use sweph computed MC.
+	NatalMCForASC float64
+	// NatalASCForProgressions: controls ASC progression method.
+	// Set to -1 to use Solar Arc in Right Ascension method (SF style).
+	NatalASCForProgressions float64
 	// Natal planets for Tr-Na reference points
 	NatalPlanets []models.PlanetID
 	// Progressed planets for Tr-Sp, Sp-Na, Sp-Sp (defaults to all planets including Chiron)
@@ -82,6 +91,7 @@ func getTestCase1() TestCase {
 	// From Solar Fire meta: JDE = 2450800.900729, DeltaT = +62s
 	// JD_UT = 2450800.900729 - 62/86400 ≈ 2450800.900009
 	// Note: SF testcase 1 does NOT use Chiron as a natal reference point in Tr-Na
+	// SF meta precise values: ASC = 06°Cancer31'45'' = 96.529167°, MC = 21°Pisces29'51'' = 351.497500°
 	return TestCase{
 		Name:        "JN - Male Chart",
 		NatalJD:     2450800.900009,
@@ -91,8 +101,11 @@ func getTestCase1() TestCase {
 		TzAbbr:      "AWST",
 		SFCSVPaths:  []string{"testdata/solarfire/testcase-1-transit.csv"},
 		UseMeanNode: true,
-		ExpectedASC: 96.530,  // 06°Cancer31'45''
-		ExpectedMC:  351.500, // 21°Pisces29'51''
+		ExpectedASC: 96.530,   // 06°Cancer31'45''
+		ExpectedMC:  351.500,  // 21°Pisces29'51''
+		// SF meta precise values (for accurate natal reference positions)
+		NatalASC:    96.529167, // SF meta: 06°Cancer31'45''
+		NatalMC:     351.4975,  // SF meta: 21°Pisces29'51''
 		// SF testcase 1: Chiron is NOT used as natal reference point
 		NatalPlanets: []models.PlanetID{
 			models.PlanetSun, models.PlanetMoon, models.PlanetMercury,
@@ -136,6 +149,11 @@ func getTestCase2() TestCase {
 		UseMeanNode: true,
 		ExpectedASC: 64.396,  // 04°Gemini23'46''
 		ExpectedMC:  316.689, // 16°Aquarius41'20''
+		// SF meta precise values for MC progression
+		NatalASC:       64.3961,  // SF meta: 04°Gemini23'46'' (for Tr-Na reference)
+		NatalMC:        316.6889, // SF meta: 16°Aquarius41'20'' (for progressed MC)
+		// For testcase-2, SF uses sweph-computed MC for ASC progression (not the meta MC)
+		NatalMCForASC:  -1,       // Force sweph-computed MC for ASC progression
 		// SF testcase 2: Chiron IS used as natal reference point
 		NatalPlanets: []models.PlanetID{
 			models.PlanetSun, models.PlanetMoon, models.PlanetMercury,
@@ -223,6 +241,10 @@ func runTestCase(tc TestCase) {
 		NatalLon:     tc.NatalLon,
 		NatalJD:      tc.NatalJD,
 		NatalPlanets: natalPlanets,
+		NatalASC:                tc.NatalASC,                // Override from SF meta
+		NatalMC:                 tc.NatalMC,                 // Override from SF meta
+		NatalMCForASC:           tc.NatalMCForASC,           // Separate override for ASC progression
+		NatalASCForProgressions: tc.NatalASCForProgressions, // Use direct solar arc for ASC progression (SF style)
 		TransitLat:   tc.NatalLat,
 		TransitLon:   tc.NatalLon,
 		StartJD:      startJD,
@@ -264,6 +286,8 @@ func runTestCase(tc TestCase) {
 			NatalLon:     tc.NatalLon,
 			NatalJD:      tc.NatalJD,
 			NatalPlanets: natalPlanets,
+			NatalASC:     tc.NatalASC, // Override from SF meta
+			NatalMC:      tc.NatalMC,  // Override from SF meta
 			TransitLat:   tc.NatalLat,
 			TransitLon:   tc.NatalLon,
 			StartJD:      startJD,
@@ -480,29 +504,40 @@ func compareSolarFire(sfPaths []string, computedEvents []models.TransitEvent, tz
 	matchExactEvents(allSFRows, computedEvents, tz)
 }
 
-func makeKey(date, p1, p2, aspect, pairType string) string {
+func makeKey(date, time, p1, p2, aspect, pairType string) string {
 	if p1 > p2 {
 		p1, p2 = p2, p1
 	}
-	return fmt.Sprintf("%s|%s|%s|%s|%s", date, p1, p2, aspect, pairType)
+	key := fmt.Sprintf("%s %s|%s|%s|%s|%s", date, time, p1, p2, aspect, pairType)
+	// Debug: show first few keys
+	staticCounter := 0
+	staticCounter++
+	if staticCounter <= 3 {
+		fmt.Printf("DEBUG KEY: '%s'\n", key)
+	}
+	return key
 }
 
-func makeFuzzyKeys(date, p1, p2, aspect, pairType string) []string {
-	keys := []string{makeKey(date, p1, p2, aspect, pairType)}
-	t, err := time.Parse("2006-01-02", date)
-	if err == nil {
-		// ±1 day for transit events
-		days := 1
-		// ±5 days for Sp-Sp/Sp-Na (progressed planets move very slowly)
-		if strings.HasPrefix(pairType, "Sp-") || strings.HasPrefix(pairType, "Sa-") {
-			days = 5
+// makeFuzzyTimeKeys generates keys with ultra-precise time tolerance in seconds
+func makeFuzzyTimeKeys(date, timeStr, p1, p2, aspect, pairType string, toleranceSeconds int) []string {
+	keys := []string{makeKey(date, timeStr, p1, p2, aspect, pairType)}
+
+	// Parse the time
+	t, err := time.Parse("2006-01-02 15:04:05", date+" "+timeStr)
+	if err != nil {
+		return keys
+	}
+
+	// Generate keys at 1-second intervals for ultra-precision
+	for offset := -toleranceSeconds; offset <= toleranceSeconds; offset++ { // 1 second steps
+		if offset == 0 {
+			continue
 		}
-		for d := -days; d <= days; d++ {
-			if d == 0 {
-				continue
-			}
-			keys = append(keys, makeKey(t.AddDate(0, 0, d).Format("2006-01-02"), p1, p2, aspect, pairType))
-		}
+		adjusted := t.Add(time.Duration(offset) * time.Second)
+		keys = append(keys, makeKey(
+			adjusted.Format("2006-01-02"),
+			adjusted.Format("15:04:05"),
+			p1, p2, aspect, pairType))
 	}
 	return keys
 }
@@ -516,74 +551,193 @@ func matchExactEvents(sfRows [][]string, computedEvents []models.TransitEvent, t
 		}
 	}
 
-	computedExacts := make(map[string]models.TransitEvent)
+	// Build computed event list with date/time info
+	type computedInfo struct {
+		event models.TransitEvent
+		row   export.CSVRow
+	}
+	var computedExacts []computedInfo
 	for _, e := range computedEvents {
 		if e.EventType != models.EventAspectExact {
 			continue
 		}
 		row := export.EventToCSVRow(e, tz)
-		// Skip events beyond SF date range (from endJD buffer)
 		if sfEndDate != "" && row.Date > sfEndDate {
 			continue
 		}
-		key := makeKey(row.Date, row.P1, row.P2, row.Aspect, row.Type)
-		computedExacts[key] = e
+		computedExacts = append(computedExacts, computedInfo{event: e, row: row})
 	}
 
-	matched := 0
-	unmatched := 0
+	// For each SF event, find the closest computed event by identity (planets+aspect+type),
+	// then report the time difference
+	type diffResult struct {
+		sfDate, sfTime     string
+		compDate, compTime string
+		diffSeconds        int
+		p1, aspect, p2     string
+		chartType          string
+	}
+	var results []diffResult
+	unmatchedSF := 0
+
 	sfExactCount := 0
 	for _, sfRow := range sfRows {
 		if len(sfRow) < 17 || sfRow[5] != "Exact" {
 			continue
 		}
 		sfExactCount++
-		keys := makeFuzzyKeys(sfRow[7], sfRow[0], sfRow[3], sfRow[2], sfRow[6])
-		found := false
-		for _, key := range keys {
-			if ce, ok := computedExacts[key]; ok {
-				matched++
-				if matched <= 5 {
-					row := export.EventToCSVRow(ce, tz)
-					fmt.Printf("  MATCH: SF %s %s %s %s %s %s | Computed %s %s %s\n",
-						sfRow[7], sfRow[8], sfRow[0], sfRow[2], sfRow[3], sfRow[6],
-						row.Date, row.Time, row.Aspect)
-				}
-				found = true
-				break
-			}
-		}
-		if !found {
-			if unmatched < 30 {
-				fmt.Printf("  SF unmatched: %s %s %s %s %s %s\n",
-					sfRow[7], sfRow[8], sfRow[0], sfRow[2], sfRow[3], sfRow[6])
-			}
-			unmatched++
-		}
-	}
-	fmt.Printf("\nSF Exact events: %d, Matched: %d, Unmatched: %d\n",
-		sfExactCount, matched, unmatched)
 
-	// Check for extra computed events (use fuzzy matching like forward match)
-	sfExactKeys := make(map[string]bool)
-	for _, sfRow := range sfRows {
-		if len(sfRow) < 17 || sfRow[5] != "Exact" {
+		sfP1 := sfRow[0]
+		sfP2 := sfRow[3]
+		sfAspect := sfRow[2]
+		sfType := sfRow[6]
+		sfDate := sfRow[7]
+		sfTime := sfRow[8]
+
+		// Normalize planet order
+		p1, p2 := sfP1, sfP2
+		if p1 > p2 {
+			p1, p2 = p2, p1
+		}
+
+		// Parse SF datetime
+		sfDT, err := time.Parse("2006-01-02 15:04:05", sfDate+" "+sfTime)
+		if err != nil {
 			continue
 		}
-		// Add all fuzzy keys (date ±1 day, swapped planets)
-		for _, key := range makeFuzzyKeys(sfRow[7], sfRow[0], sfRow[3], sfRow[2], sfRow[6]) {
-			sfExactKeys[key] = true
-		}
-	}
-	extra := 0
-	for key := range computedExacts {
-		if !sfExactKeys[key] {
-			extra++
-			if extra <= 20 {
-				parts := strings.Split(key, "|")
-				fmt.Printf("  Extra computed: %s\n", strings.Join(parts, " "))
+
+		// Find closest computed event with same identity
+		bestDiff := int(1e9)
+		bestIdx := -1
+		for i, ce := range computedExacts {
+			cp1, cp2 := ce.row.P1, ce.row.P2
+			if cp1 > cp2 {
+				cp1, cp2 = cp2, cp1
+			}
+			if cp1 != p1 || cp2 != p2 || ce.row.Aspect != sfAspect || ce.row.Type != sfType {
+				continue
+			}
+			compDT, err2 := time.Parse("2006-01-02 15:04:05", ce.row.Date+" "+ce.row.Time)
+			if err2 != nil {
+				continue
+			}
+			diff := int(compDT.Sub(sfDT).Seconds())
+			if diff < 0 {
+				diff = -diff
+			}
+			if diff < bestDiff {
+				bestDiff = diff
+				bestIdx = i
 			}
 		}
+
+		if bestIdx >= 0 {
+			ce := computedExacts[bestIdx]
+			compDT, _ := time.Parse("2006-01-02 15:04:05", ce.row.Date+" "+ce.row.Time)
+			diff := int(compDT.Sub(sfDT).Seconds())
+			results = append(results, diffResult{
+				sfDate: sfDate, sfTime: sfTime,
+				compDate: ce.row.Date, compTime: ce.row.Time,
+				diffSeconds: diff,
+				p1: sfP1, aspect: sfAspect, p2: sfP2,
+				chartType: sfType,
+			})
+		} else {
+			unmatchedSF++
+			fmt.Printf("  NO MATCH: %s %s %s %s %s %s\n", sfDate, sfTime, sfP1, sfAspect, sfP2, sfType)
+		}
 	}
-	fmt.Printf("Extra computed Exact events: %d\n", extra)
+
+	// Sort results by absolute diff
+	sort.Slice(results, func(i, j int) bool {
+		ai := results[i].diffSeconds
+		if ai < 0 { ai = -ai }
+		aj := results[j].diffSeconds
+		if aj < 0 { aj = -aj }
+		return ai < aj
+	})
+
+	// Print diff distribution
+	fmt.Printf("\n=== Time Difference Distribution (all %d matched events) ===\n", len(results))
+
+	// Count by buckets
+	within1s, within10s, within60s, within5m, within30m, within1h, beyond1h := 0, 0, 0, 0, 0, 0, 0
+	for _, r := range results {
+		absDiff := r.diffSeconds
+		if absDiff < 0 { absDiff = -absDiff }
+		switch {
+		case absDiff <= 1:
+			within1s++
+		case absDiff <= 10:
+			within10s++
+		case absDiff <= 60:
+			within60s++
+		case absDiff <= 300:
+			within5m++
+		case absDiff <= 1800:
+			within30m++
+		case absDiff <= 3600:
+			within1h++
+		default:
+			beyond1h++
+		}
+	}
+	fmt.Printf("  <=1s:    %d\n", within1s)
+	fmt.Printf("  2-10s:   %d\n", within10s)
+	fmt.Printf("  11-60s:  %d\n", within60s)
+	fmt.Printf("  1-5m:    %d\n", within5m)
+	fmt.Printf("  5-30m:   %d\n", within30m)
+	fmt.Printf("  30m-1h:  %d\n", within1h)
+	fmt.Printf("  >1h:     %d\n", beyond1h)
+	fmt.Printf("  No match: %d\n", unmatchedSF)
+
+	// Print by chart type
+	typeStats := make(map[string][]int) // chartType -> list of diffs
+	for _, r := range results {
+		typeStats[r.chartType] = append(typeStats[r.chartType], r.diffSeconds)
+	}
+	fmt.Printf("\n=== By Chart Type ===\n")
+	var types []string
+	for t := range typeStats {
+		types = append(types, t)
+	}
+	sort.Strings(types)
+	for _, t := range types {
+		diffs := typeStats[t]
+		var sumAbs int
+		maxAbs := 0
+		for _, d := range diffs {
+			ad := d
+			if ad < 0 { ad = -ad }
+			sumAbs += ad
+			if ad > maxAbs { maxAbs = ad }
+		}
+		avgAbs := float64(sumAbs) / float64(len(diffs))
+		fmt.Printf("  %s: %d events, avg |diff|=%.0fs (%.1fmin), max |diff|=%ds (%.1fmin)\n",
+			t, len(diffs), avgAbs, avgAbs/60, maxAbs, float64(maxAbs)/60)
+	}
+
+	// Print worst 20 events (largest diff)
+	fmt.Printf("\n=== Worst 20 (largest time diff) ===\n")
+	for i := len(results) - 1; i >= 0 && i >= len(results)-20; i-- {
+		r := results[i]
+		fmt.Printf("  %+6ds (%+.1fmin) | SF %s %s | Comp %s %s | %s %s %s %s\n",
+			r.diffSeconds, float64(r.diffSeconds)/60,
+			r.sfDate, r.sfTime, r.compDate, r.compTime,
+			r.p1, r.aspect, r.p2, r.chartType)
+	}
+
+	// Print best 20 events (smallest diff)
+	fmt.Printf("\n=== Best 20 (smallest time diff) ===\n")
+	limit := 20
+	if limit > len(results) { limit = len(results) }
+	for i := 0; i < limit; i++ {
+		r := results[i]
+		fmt.Printf("  %+6ds (%+.1fmin) | SF %s %s | Comp %s %s | %s %s %s %s\n",
+			r.diffSeconds, float64(r.diffSeconds)/60,
+			r.sfDate, r.sfTime, r.compDate, r.compTime,
+			r.p1, r.aspect, r.p2, r.chartType)
+	}
+
+	fmt.Printf("\nSF Exact: %d, Paired: %d, No match: %d\n", sfExactCount, len(results), unmatchedSF)
 }

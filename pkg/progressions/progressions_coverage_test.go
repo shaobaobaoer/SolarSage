@@ -47,7 +47,7 @@ func TestCalcProgressedAngles(t *testing.T) {
 	natalJD := 2448057.5208  // 1990-07-12
 	transitJD := 2460310.667 // ~2024
 
-	asc, mc, err := CalcProgressedAngles(natalJD, transitJD, 39.9, 116.4, models.HousePlacidus)
+	asc, mc, err := CalcProgressedAngles(natalJD, transitJD, 39.9, 116.4, models.HousePlacidus, 0, 0, 0)
 	if err != nil {
 		t.Fatalf("CalcProgressedAngles error: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestCalcProgressedSpecialPoint(t *testing.T) {
 		{models.PointIC},
 	}
 	for _, tt := range tests {
-		lon, err := CalcProgressedSpecialPoint(tt.sp, natalJD, transitJD, 39.9, 116.4, models.HousePlacidus)
+		lon, err := CalcProgressedSpecialPoint(tt.sp, natalJD, transitJD, 39.9, 116.4, models.HousePlacidus, 0, 0, 0)
 		if err != nil {
 			t.Errorf("CalcProgressedSpecialPoint(%s) error: %v", tt.sp, err)
 			continue
@@ -83,7 +83,7 @@ func TestCalcProgressedSpecialPoint(t *testing.T) {
 	}
 
 	// Unsupported point
-	_, err := CalcProgressedSpecialPoint(models.PointVertex, natalJD, transitJD, 39.9, 116.4, models.HousePlacidus)
+	_, err := CalcProgressedSpecialPoint(models.PointVertex, natalJD, transitJD, 39.9, 116.4, models.HousePlacidus, 0, 0, 0)
 	if err == nil {
 		t.Error("Expected error for unsupported special point Vertex")
 	}
