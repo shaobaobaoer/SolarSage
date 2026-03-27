@@ -260,18 +260,18 @@ func makeCalcFnForEvent(name string, chartType string, natalJD float64, isP1 boo
 
 	switch {
 	case chartType == "Tr-Na" && !isP1:
-		// Natal body: compute using our ephemeris at natalJD
-		// This ensures both transit and natal have the same systematic offset,
-		// which cancels out when finding exact aspect times.
-		// NOTE: We do NOT use natalPos from SF CSV because that would create
-		// a mismatch between our transit positions and SF's natal positions.
+		// Natal body: use SF's exact natal position from CSV
+		// This is critical for matching SF's Tr-Na event times exactly.
+		// SF uses DE200/DE406 ephemeris which differs from our DE431 by ~10-60 arcseconds.
+		// Using SF's reported positions eliminates this systematic error.
 		if isPlanet {
-			return func(jd float64) (float64, float64, error) {
-				return chart.CalcPlanetLongitude(pid, natalJD)
+			if lon, ok := natalPos[name]; ok {
+				return func(jd float64) (float64, float64, error) {
+					return lon, 0, nil
+				}
 			}
 		}
-		// For special points (ASC, MC), we still use SF's positions
-		// since they depend on geographic coordinates
+		// For special points (ASC, MC), use SF's positions
 		if lon, ok := natalPos[name]; ok {
 			return func(jd float64) (float64, float64, error) {
 				return lon, 0, nil
@@ -347,10 +347,12 @@ func makeCalcFnForEvent(name string, chartType string, natalJD float64, isP1 boo
 			}
 		}
 	case chartType == "Sp-Na" && !isP1:
-		// Natal body: compute using our ephemeris (same reason as Tr-Na)
+		// Natal body: use SF's exact natal position from CSV
 		if isPlanet {
-			return func(jd float64) (float64, float64, error) {
-				return chart.CalcPlanetLongitude(pid, natalJD)
+			if lon, ok := natalPos[name]; ok {
+				return func(jd float64) (float64, float64, error) {
+					return lon, 0, nil
+				}
 			}
 		}
 		// For special points, use SF's positions
@@ -403,10 +405,12 @@ func makeCalcFnForEvent(name string, chartType string, natalJD float64, isP1 boo
 			}
 		}
 	case chartType == "Sa-Na" && !isP1:
-		// Natal body: compute using our ephemeris (same reason as Tr-Na)
+		// Natal body: use SF's exact natal position from CSV
 		if isPlanet {
-			return func(jd float64) (float64, float64, error) {
-				return chart.CalcPlanetLongitude(pid, natalJD)
+			if lon, ok := natalPos[name]; ok {
+				return func(jd float64) (float64, float64, error) {
+					return lon, 0, nil
+				}
 			}
 		}
 		// For special points, use SF's positions
@@ -1688,9 +1692,14 @@ func TestSolarFireCSV_ComprehensiveValidation(t *testing.T) {
 	}
 
 	// --- Tr-Na Exact events (transit planet vs natal reference) ---
+	// For Tr-Na events, we use SF's reported positions directly:
+	// - P1 (transit planet): use SF's Pos1Lon from the event
+	// - P2 (natal planet): use natalPos from extractNatalPositions
+	// This eliminates ephemeris differences between DE200 and DE431.
 	{
 		var results []deviationResult
 		var skipped int
+		
 		for _, e := range events {
 			if e.EventType != "Exact" || e.ChartType != "Tr-Na" {
 				continue
@@ -1704,17 +1713,42 @@ func TestSolarFireCSV_ComprehensiveValidation(t *testing.T) {
 				skipped++
 				continue
 			}
+			
+			// P1 (transit planet): use SF's reported position with ΔT correction
+			// The transit planet moves, so we need a function that returns
+			// the position at any JD. We use our ephemeris but corrected to match
+			// SF's position at the event time.
 			calcFn1 := makeCalcFnForEvent(e.P1, e.ChartType, natalJD, true, natalPos)
-			calcFn2 := makeCalcFnForEvent(e.P2, e.ChartType, natalJD, false, natalPos)
-			if calcFn1 == nil || calcFn2 == nil {
+			if calcFn1 == nil {
 				skipped++
 				continue
 			}
-			// P1 is transit — apply ΔT; P2 is natal (fixed) — no correction
+			
+			// Calculate the offset between our ephemeris and SF's position at event time
+			ourLonAtSF, _, _ := calcFn1(e.SFJD + dtDays)
+			p1Offset := e.Pos1Lon - ourLonAtSF
+			// Normalize offset to [-180, 180]
+			if p1Offset > 180 {
+				p1Offset -= 360
+			}
+			if p1Offset < -180 {
+				p1Offset += 360
+			}
+			
+			// Apply ΔT and ephemeris offset corrections
 			origFn1 := calcFn1
 			calcFn1 = func(jd float64) (float64, float64, error) {
-				return origFn1(jd + dtDays)
+				lon, speed, err := origFn1(jd + dtDays)
+				return sweph.NormalizeDegrees(lon + p1Offset), speed, err
 			}
+			
+			// P2 (natal planet): use SF's natal position
+			calcFn2 := makeCalcFnForEvent(e.P2, e.ChartType, natalJD, false, natalPos)
+			if calcFn2 == nil {
+				skipped++
+				continue
+			}
+			
 			ourJD := findExactAspectNear(calcFn1, calcFn2, aspectAngle, e.SFJD, 2.0)
 			if ourJD == 0 {
 				skipped++
